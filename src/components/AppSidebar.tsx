@@ -13,6 +13,7 @@ import {
   Wifi,
   ChevronDown,
   Cloud,
+  Target,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -41,7 +42,9 @@ const dashboardItems = [
     icon: Activity,
     children: [
       { title: "Overview", url: "/network" },
-      { title: "SSL-VPN Monitor", url: "/network/ssl-vpn" },
+      { title: "Routing Monitor", url: "/network/routing" },
+      { title: "DHCP Monitor", url: "/network/dhcp" },
+      { title: "IPsec Monitor", url: "/network/ipsec" },
     ],
   },
   { title: "Assets & Identities", url: "/assets-identities", icon: Users },
@@ -56,6 +59,7 @@ const monitorItems = [
   { title: "Applications", url: "/monitors/applications", icon: AppWindow },
   { title: "Threats", url: "/monitors/threats", icon: AlertTriangle },
   { title: "VPN Monitor", url: "/monitors/vpn", icon: Eye },
+  { title: "Firewall Objects", url: "/monitors/firewall-objects", icon: Target },
   { title: "Top Websites", url: "/monitors/top-websites", icon: Globe },
   { title: "Cloud Apps", url: "/monitors/cloud-apps", icon: Cloud },
 ];

@@ -1,9 +1,12 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { Bell, Search, User } from "lucide-react";
+import { Search, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { NotificationPopover } from "@/components/widgets/NotificationPopover";
+import { DarkModeToggle } from "@/components/widgets/DarkModeToggle";
+import { systemInfo } from "@/data/mockData";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -25,17 +28,16 @@ export function DashboardLayout({ children, title, subtitle }: DashboardLayoutPr
                 {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="hidden lg:flex text-[10px] font-mono gap-1">
+                {systemInfo.hostname} <span className="text-muted-foreground">v7.6.0</span>
+              </Badge>
               <div className="relative hidden md:block">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input placeholder="Search..." className="pl-8 w-56 h-9 text-sm" />
               </div>
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="h-4 w-4" />
-                <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-[10px]">
-                  3
-                </Badge>
-              </Button>
+              <NotificationPopover />
+              <DarkModeToggle />
               <Button variant="ghost" size="icon">
                 <User className="h-4 w-4" />
               </Button>

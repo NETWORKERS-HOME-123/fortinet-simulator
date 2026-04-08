@@ -7,25 +7,33 @@ import { Users, Monitor, ShieldCheck, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState, useMemo } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 type User = typeof activeUsers[number];
 
+const deviceTypes = ["All", "Windows PC", "macOS", "Linux Server", "iPhone", "Android", "Printer", "IoT Device"];
+
 export default function AssetsIdentitiesDashboard() {
-  const [macFilter, setMacFilter] = useState("");
+  const [searchFilter, setSearchFilter] = useState("");
+  const [typeFilter, setTypeFilter] = useState("All");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   const totalDevices = deviceInventory.reduce((a, d) => a + d.count, 0);
   const totalNonCompliant = deviceInventory.reduce((a, d) => a + d.nonCompliant, 0);
 
   const filteredUsers = useMemo(() => {
-    if (!macFilter) return activeUsers;
-    return activeUsers.filter(u =>
-      u.username.toLowerCase().includes(macFilter.toLowerCase()) ||
-      u.ip.includes(macFilter)
-    );
-  }, [macFilter]);
+    return activeUsers.filter(u => {
+      if (searchFilter && !u.username.toLowerCase().includes(searchFilter.toLowerCase()) && !u.ip.includes(searchFilter)) return false;
+      return true;
+    });
+  }, [searchFilter]);
+
+  const filteredDevices = useMemo(() => {
+    if (typeFilter === "All") return deviceInventory;
+    return deviceInventory.filter(d => d.type === typeFilter);
+  }, [typeFilter]);
 
   return (
     <DashboardLayout title="Assets & Identities" subtitle="Devices, Users & Authentication">
@@ -37,7 +45,6 @@ export default function AssetsIdentitiesDashboard() {
 
         <TabsContent value="assets" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {/* Summary */}
             <Card>
               <CardContent className="pt-6 text-center">
                 <div className="text-3xl font-bold">{totalDevices}</div>
@@ -63,16 +70,26 @@ export default function AssetsIdentitiesDashboard() {
               </CardContent>
             </Card>
 
-            {/* Device Inventory Chart */}
+            {/* Device Inventory Chart with filter */}
             <Card className="md:col-span-2">
-              <CardHeader className="pb-2">
+              <CardHeader className="pb-2 flex flex-row items-center justify-between">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
                   <Monitor className="h-4 w-4 text-primary" /> Device Inventory
                 </CardTitle>
+                <Select value={typeFilter} onValueChange={setTypeFilter}>
+                  <SelectTrigger className="w-36 h-8 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {deviceTypes.map(t => (
+                      <SelectItem key={t} value={t} className="text-xs">{t}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={220}>
-                  <BarChart data={deviceInventory}>
+                  <BarChart data={filteredDevices}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis dataKey="type" tick={{ fontSize: 9 }} stroke="hsl(var(--muted-foreground))" />
                     <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
@@ -95,8 +112,8 @@ export default function AssetsIdentitiesDashboard() {
                   <Input
                     placeholder="Filter by user or IP..."
                     className="pl-7 h-8 w-48 text-xs"
-                    value={macFilter}
-                    onChange={(e) => setMacFilter(e.target.value)}
+                    value={searchFilter}
+                    onChange={(e) => setSearchFilter(e.target.value)}
                   />
                 </div>
               </CardHeader>
