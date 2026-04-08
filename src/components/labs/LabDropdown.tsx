@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { GraduationCap, Play, CheckCircle, Circle, RotateCcw } from "lucide-react";
+import { GraduationCap, Play, CheckCircle, Circle } from "lucide-react";
 
 export function LabDropdown() {
   const navigate = useNavigate();
@@ -91,7 +91,7 @@ export function LabDropdown() {
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{scenario.title}</p>
                 <p className="text-[10px] text-muted-foreground">
-                  {scenario.objectives.length} objectives · {scenario.estimatedMinutes}min
+                  {scenario.objectives.length} steps · {scenario.estimatedMinutes}min
                 </p>
               </div>
               <Badge variant="outline" className={`text-[9px] shrink-0 ${diffColors[scenario.difficulty]}`}>
