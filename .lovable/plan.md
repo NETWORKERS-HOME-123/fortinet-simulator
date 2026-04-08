@@ -1,110 +1,151 @@
 
 
-# Fix Build Errors + Complete FortiGate Dashboard Feature Audit
+# Accurate FortiGate Dashboard Clone — Gap Analysis & Implementation Plan
 
-## Immediate Fix: Build Errors
+## Source Reference
+- Video: https://www.youtube.com/watch?v=a7hhluPGS90 (FortiGate Dashboard Walkthrough, 35 min)
+- Official docs: FortiGate/FortiOS 7.6.6 Administration Guide — Dashboards and Monitors section
 
-Both `StatusDashboard.tsx` and `NetworkDashboard.tsx` have **duplicate `export default function` declarations**. The real-time animation code (useState/useEffect with jitter) was prepended at lines 12-35 but the original function declaration at line 37/41 was never removed. This creates two function bodies with only one closing brace.
-
-**Fix**: Merge the animation state/effects into the single component function, removing the duplicate declaration.
-
----
-
-## Feature Audit vs. FortiGate 7.6 Official Documentation
-
-Based on the FortiGate 7.6.0 Administration Guide, the official dashboard structure under **Dashboard & Monitors** is:
+## Official FortiGate Dashboard Structure (from docs lines 785-812)
 
 ```text
 Dashboard
-  +-- Status
-  +-- Security
-  +-- Network
-  |     +-- Static & Dynamic Routing monitor
-  |     +-- DHCP monitor
-  |     +-- IPsec monitor
-  |     +-- SSL-VPN monitor
-  +-- Assets & Identities
-  |     +-- Assets (device list with filtering)
-  |     +-- Firewall Users monitor
-  +-- WiFi (not in scope -- requires FortiAP)
+├── Status Dashboard
+│   ├── System Information widget (hostname, serial, firmware, uptime, system time, operation mode)
+│   ├── Licenses widget (FortiCare, UTM bundle, FortiCloud status)
+│   ├── FortiGuard widget (AV/IPS/App DB versions, last update)
+│   ├── Security Fabric widget (topology of connected Fortinet devices)
+│   ├── CPU gauge widget
+│   ├── Memory gauge widget
+│   ├── Session Rate chart
+│   ├── Administrators widget (logged-in admins)
+│   ├── Virtual Domains widget
+│   ├── HA Status widget
+│   └── Alert & Log Console
+├── Security Dashboard
+│   ├── Top Threats bar chart
+│   ├── Compromised Hosts table → click row → session detail modal
+│   ├── FortiSandbox stats
+│   ├── IPS blocked signatures
+│   ├── Web Filter category donut
+│   └── Antivirus detected timeline
+├── Network Dashboard
+│   ├── Application Bandwidth chart
+│   ├── Sessions chart (IPv4/IPv6, current count, SPU %)
+│   ├── Memory Usage chart
+│   ├── Interface Bandwidth table
+│   ├── Sub-monitors:
+│   │   ├── Static & Dynamic Routing monitor
+│   │   ├── DHCP monitor
+│   │   └── IPsec monitor
+│   └── (No SSL-VPN sub-monitor — SSL-VPN was under VPN, not Network)
+├── Assets & Identities
+│   ├── Assets tab (device list with filtering by type/OS)
+│   ├── Asset details slide-out panel (click device → full info)
+│   ├── MAC-based address adding
+│   └── Firewall Users monitor (authenticated users table)
+├── WiFi Dashboard
+│   ├── FortiAP Status monitor
+│   └── Clients by FortiAP monitor
+└── Agentless VPN monitor (not SSL-VPN under Network)
 
 Monitors (FortiView)
-  +-- Sources
-  +-- Sessions
-  +-- Top Source / Top Destination Firewall Objects
-  +-- Top Websites & Sources by Category
-  +-- Cloud Application view
+├── Sources
+├── Sessions
+├── Top Source / Top Destination Firewall Objects
+├── Top Websites & Sources by Category
+├── Cloud Application view
+│   └── Application risk levels
+└── FortiTelemetry monitors (optional)
 ```
 
-### What Exists vs. What's Missing
+## Gap Analysis — What's Missing or Inaccurate
 
-| Feature | Status | Gap |
-|---------|--------|-----|
-| **Status Dashboard** | Built | Missing: FortiGuard info widget, Virtual Domain widget, Admin Users widget |
-| **Security Dashboard** | Built | Missing: Compromised host drill-down modal (session details) |
-| **Network Dashboard** | Built (broken) | Missing: SSL-VPN sub-monitor page |
-| **Assets & Identities** | Renamed "Users & Devices" | Missing: Firewall Users sub-monitor, device MAC filtering, Assets detail panel |
-| **WiFi Dashboard** | Not built | New page: FortiAP status, Clients by FortiAP |
-| **VPN Dashboard** | Built (extra) | Not in official nav -- VPN info is under Network. Keep as-is for value. |
-| **FortiView: Sources** | Built | Missing: Threat score color coding, drill-down detail panel |
-| **FortiView: Sessions** | Built | Missing: Column sorting, filter bar, pagination |
-| **FortiView: Destinations** | Built | Missing: Top Source/Destination Firewall Objects |
-| **FortiView: Applications** | Built | Missing: Cloud application sub-view |
-| **FortiView: Threats** | Built | OK |
-| **FortiView: VPN Monitor** | Built | OK |
-| **Widget system** | No | Missing: "Add Widget" button, widget reorder/resize (FortiGate lets admins customize dashboard layout) |
-| **Row drill-down modals** | No | FortiGate allows clicking any table row to see detail in a slide-out or modal |
-| **Real-time animations** | Partially broken | Duplicate function declarations cause build failure |
+### Status Dashboard — MOSTLY COMPLETE
+- **Missing**: System Time display (clock), Operation Mode (NAT/Transparent)
+- **Missing**: "Add Widget" button (FortiGate allows customizing which widgets appear)
+- **Missing**: Widget edit/close icons per widget header (gear icon, X button)
 
----
+### Security Dashboard — MOSTLY COMPLETE
+- **OK**: Has compromised host drill-down modal already
+- **Missing**: Severity color-coded threat score badges in compromised hosts
 
-## Detailed Task List
+### Network Dashboard — STRUCTURAL ISSUE
+- **Problem**: Routing Table and DHCP Leases are shown inline. In FortiGate they are separate sub-monitor pages accessible from sidebar
+- **Problem**: SSL-VPN monitor is incorrectly placed under Network. Per official docs, it's NOT under Network dashboard. The Network sub-monitors are: Routing, DHCP, IPsec only
+- **Fix**: Move routing/DHCP/IPsec to sub-pages, keep charts on main Network page
 
-### Phase 1: Critical Fixes
-1. **Fix StatusDashboard.tsx build error** -- Remove duplicate function declaration, merge animation state into single component
-2. **Fix NetworkDashboard.tsx build error** -- Same pattern: merge animation code into single function
+### Assets & Identities — NEEDS WORK
+- **Missing**: Proper Assets tab showing detected devices with type/OS/MAC columns and filtering dropdowns
+- **Missing**: Asset detail slide-out (Sheet) when clicking a device row showing all device properties
+- **Firewall Users**: exists but needs auth method, group, timeout columns
 
-### Phase 2: Missing Widgets on Existing Dashboards
-3. **Status Dashboard: Add FortiGuard widget** -- Shows FortiGuard subscription details (AV version, IPS version, last update time)
-4. **Status Dashboard: Add Administrator widget** -- Shows currently logged-in admins with IP, login time, access profile
-5. **Status Dashboard: Add Virtual Domain widget** -- Shows VDOMs with traffic summary (even if just "root" for single-VDOM mode)
-6. **Network Dashboard: Add SSL-VPN sub-monitor** -- Table of active SSL-VPN sessions with user, tunnel IP, duration, bandwidth (link from Network sidebar)
-7. **Security Dashboard: Add compromised host detail modal** -- Click a compromised host row to see session details (source/dest IPs, protocols, policy matches) in a dialog
+### WiFi Dashboard — OK
+- Has FortiAP Status and Clients tables
 
-### Phase 3: Missing Dashboard Pages
-8. **Add WiFi Dashboard page** -- FortiAP Status monitor (AP name, serial, status, clients, channel, firmware) + Clients by FortiAP table
-9. **Add Assets & Identities page** -- Rename "Users & Devices" to "Assets & Identities" in sidebar, add MAC-based filtering UI, Assets detail slide-out panel
-10. **Add Firewall Users sub-monitor** -- Table showing authenticated firewall users (username, auth method, group, traffic used, timeout remaining)
+### FortiView Monitors — MISSING ITEMS
+- **Missing**: "Top Source Firewall Objects" and "Top Destination Firewall Objects" monitors (separate from Sources/Destinations)
+- **Sessions monitor**: Already has sorting/filtering/pagination/drill-down — good
+- **Sources monitor**: Missing threat score color coding
+- **Applications monitor**: Missing risk level color badges
+- **Missing**: FortiView interface features — bubble chart view toggle (FortiView shows bubble charts by default, table view is secondary)
 
-### Phase 4: FortiView Monitor Enhancements
-11. **Add column sorting to all FortiView tables** -- Click column headers to sort ascending/descending with visual indicator
-12. **Add filter bar to FortiView monitors** -- Search input + time range + dropdown filters (protocol, severity, etc.)
-13. **Add row drill-down detail panels** -- Click any row in Sessions/Sources/Destinations/Applications to expand an inline detail card or open a dialog with full session info
-14. **Add Top Websites & Sources by Category view** -- New FortiView page showing web categories ranked by sessions/bandwidth
-15. **Add Cloud Application view** -- New FortiView page showing cloud/SaaS app usage (Office 365, Salesforce, etc.) with risk ratings
-
-### Phase 5: Widget System & Polish
-16. **Add "Add Widget" button** -- Each dashboard page gets a "+" button that opens a dialog listing available widgets for that dashboard type
-17. **Add widget drag-to-reorder** -- Allow users to rearrange widget cards on each dashboard (persist to localStorage)
-18. **Add sidebar sub-navigation** -- Network dashboard sidebar item should expand to show sub-monitors (Routing, DHCP, IPsec, SSL-VPN) as nested links
-19. **Add dark mode toggle** -- Button in header bar to switch between light/dark themes
-20. **Add notification dropdown** -- Click bell icon to show recent alerts in a popover panel
-
-### Phase 6: Data Completeness
-21. **Add WiFi mock data** -- FortiAP devices, connected clients, signal strength, channel utilization
-22. **Add Firewall Users mock data** -- Authenticated users with auth type, group, timeout, traffic
-23. **Add Cloud Applications mock data** -- SaaS app usage data for cloud application view
-24. **Add Top Websites mock data** -- Website categories with visit counts and bandwidth
+### Global UI Features Missing
+- **No "Add Widget" button** on dashboard pages
+- **No widget close/edit buttons** in widget headers
+- **No dark mode toggle** (FortiGate has dark theme)
+- **No notification popover** when clicking bell icon
+- **Header missing**: FortiOS version badge, hostname display in header bar
 
 ---
 
-## Technical Details
+## Implementation Plan
 
-**Build error root cause**: Lines 16-35 of both dashboard files contain a standalone block with `useState`, `useEffect`, and `jitter()` that tries to be its own function scope, but a second `export default function` immediately follows at line 37/41. The fix merges lines 12-35 into the body of the single component function.
+### Phase 1: Fix Network Dashboard Structure
+1. **Split Network sub-monitors into separate routed pages**
+   - `/network/routing` — Static & Dynamic Routing monitor (move existing routing table here, add type/distance/metric columns)
+   - `/network/dhcp` — DHCP monitor (move existing DHCP table, add MAC, lease time, server columns)  
+   - `/network/ipsec` — IPsec monitor (move existing IPsec table, add detail modal on row click)
+   - Keep Application Bandwidth, Sessions, Memory charts on main `/network` page
+   - Remove SSL-VPN from Network sub-nav (it belongs under VPN or standalone)
+2. **Update sidebar** to show Routing/DHCP/IPsec as Network children instead of SSL-VPN
 
-**Widget system approach**: Use `react-grid-layout` or a simple drag-and-drop with CSS Grid. Store layout config in `localStorage` per dashboard.
+### Phase 2: Enhance Status Dashboard
+3. **Add system time clock** — live updating clock showing current date/time
+4. **Add operation mode** to System Info widget (NAT/Transparent)
+5. **Add widget header actions** — each Card gets a small settings gear and close icon (UI only, no persistence needed)
+6. **Add "Add Widget" floating button** — opens dialog listing available widgets for the dashboard
 
-**Drill-down modals**: Use shadcn `Dialog` or `Sheet` components. Each table row gets an `onClick` that opens the detail view with the row's data passed as props.
+### Phase 3: Fix Assets & Identities
+7. **Rebuild Assets tab** — proper device table with columns: Device Name, MAC Address, IP, OS, Type, Status, Last Seen
+8. **Add filter dropdowns** — filter by device type (PC/Mobile/IoT/Server), OS, status
+9. **Add Asset detail Sheet** — click row opens right-side slide-out with full device properties, traffic stats, associated user
+10. **Enhance Firewall Users tab** — add auth method, group, traffic used, timeout remaining columns
 
-**Sidebar sub-navigation**: Use shadcn `Collapsible` inside `SidebarMenuItem` to nest sub-links under Network and Assets & Identities.
+### Phase 4: FortiView Accuracy
+11. **Add Top Firewall Objects monitors** — new page `/monitors/firewall-objects` with two tabs: Top Source Objects and Top Destination Objects (policy-level grouping)
+12. **Add bubble chart toggle** to Sources/Destinations/Applications monitors — FortiView defaults to a bubble/treemap visualization, with table as secondary view
+13. **Add risk level color badges** to Applications monitor (1-5 scale with green-to-red coloring)
+14. **Add threat score color coding** to Sources monitor
+
+### Phase 5: Global UI Polish
+15. **Add notification popover** — clicking bell icon shows dropdown with recent alerts from alertLogs
+16. **Add dark mode toggle** in header — switch CSS variables between light/dark
+17. **Add hostname + firmware badge** in header bar (shows "FGT-DC-PRIMARY v7.6.0")
+18. **Add "Add Widget" dialog** — each dashboard gets a "+" button opening a picker
+
+### Phase 6: Missing Mock Data
+19. **Expand routing mock data** — add distance, metric, preference, age columns
+20. **Expand DHCP mock data** — add MAC address, lease time, DHCP server, interface columns
+21. **Add Firewall Objects mock data** — policy names, source/dest object groupings with hit counts
+
+---
+
+## Technical Approach
+
+- **Sub-monitor pages**: Create `src/pages/network/RoutingMonitor.tsx`, `DhcpMonitor.tsx`, `IpsecMonitor.tsx` as separate route components
+- **Bubble chart**: Use Recharts `ScatterChart` with bubble size mapped to bandwidth/sessions
+- **Widget actions**: Add optional `onClose` and `onSettings` props to Card wrappers, render icon buttons in CardHeader
+- **Dark mode**: Use Tailwind `dark:` classes, toggle by adding/removing `dark` class on `<html>` element, persist to localStorage
+- **Notification popover**: Use shadcn `Popover` on the Bell button, render last 10 alertLogs with severity badges
 
