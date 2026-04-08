@@ -362,3 +362,22 @@ export const fortiviewVpn = [
   { user: "Branch-LAX", tunnelType: "IPsec", sourceIp: "203.0.113.80", duration: "42 days", bytesIn: "2.4 GB", bytesOut: "1.8 GB", status: "active" },
   { user: "Branch-CHI", tunnelType: "IPsec", sourceIp: "192.0.2.100", duration: "0", bytesIn: "0", bytesOut: "0", status: "down" },
 ];
+
+// Firewall Objects
+export const firewallSourceObjects = [
+  { name: "LAN_SUBNET", type: "Subnet", policy: "Policy-1", hitCount: 245000, sessions: 12400, bandwidth: "8.2 GB" },
+  { name: "DMZ_SERVERS", type: "Group", policy: "Policy-3", hitCount: 189000, sessions: 8900, bandwidth: "5.6 GB" },
+  { name: "VPN_USERS", type: "Group", policy: "Policy-12", hitCount: 134000, sessions: 5600, bandwidth: "3.1 GB" },
+  { name: "GUEST_WIFI", type: "Subnet", policy: "Policy-20", hitCount: 78000, sessions: 3200, bandwidth: "1.8 GB" },
+  { name: "MGMT_HOSTS", type: "Address", policy: "Policy-5", hitCount: 45000, sessions: 890, bandwidth: "456 MB" },
+  { name: "IOT_DEVICES", type: "Group", policy: "Policy-25", hitCount: 23000, sessions: 450, bandwidth: "234 MB" },
+];
+
+export const firewallDestObjects = [
+  { name: "INTERNET_ALL", type: "Wildcard", policy: "Policy-1", hitCount: 890000, sessions: 45200, bandwidth: "22.1 GB" },
+  { name: "MS365_CLOUD", type: "FQDN Group", policy: "Policy-8", hitCount: 245000, sessions: 12400, bandwidth: "4.5 GB" },
+  { name: "AWS_VPC", type: "Subnet", policy: "Policy-15", hitCount: 134000, sessions: 5600, bandwidth: "5.6 GB" },
+  { name: "DNS_SERVERS", type: "Address Group", policy: "Policy-3", hitCount: 98000, sessions: 98000, bandwidth: "234 MB" },
+  { name: "INTERNAL_SERVERS", type: "Group", policy: "Policy-10", hitCount: 67000, sessions: 4200, bandwidth: "3.2 GB" },
+  { name: "BLOCKED_SITES", type: "FQDN Group", policy: "Policy-30", hitCount: 12000, sessions: 0, bandwidth: "0 B" },
+];

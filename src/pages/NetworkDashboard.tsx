@@ -2,7 +2,7 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/widgets/StatusBadge";
 import { TimeRangeSelector } from "@/components/widgets/TimeRangeSelector";
-import { bandwidthData as initBw, sessionData as initSess, memoryData as initMem, interfaces, routes, dhcpLeases, ipsecTunnels, currentSessions, spuPercentage } from "@/data/mockData";
+import { bandwidthData as initBw, sessionData as initSess, memoryData as initMem, interfaces, currentSessions, spuPercentage } from "@/data/mockData";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis, Legend } from "recharts";
 import { useState, useEffect } from "react";
@@ -132,97 +132,6 @@ export default function NetworkDashboard() {
                     <TableCell className="text-xs py-2">{iface.speed}</TableCell>
                     <TableCell className="text-xs py-2">{iface.rxRate}</TableCell>
                     <TableCell className="text-xs py-2">{iface.txRate}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-
-        {/* Routing Table */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Routing Table</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-xs">Destination</TableHead>
-                  <TableHead className="text-xs">Gateway</TableHead>
-                  <TableHead className="text-xs">Interface</TableHead>
-                  <TableHead className="text-xs">Type</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {routes.map((r, i) => (
-                  <TableRow key={i}>
-                    <TableCell className="text-xs font-mono py-2">{r.destination}</TableCell>
-                    <TableCell className="text-xs font-mono py-2">{r.gateway}</TableCell>
-                    <TableCell className="text-xs py-2">{r.interface}</TableCell>
-                    <TableCell className="text-xs py-2"><StatusBadge status={r.type === "static" ? "info" : r.type === "connected" ? "active" : "monitoring"} /></TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-
-        {/* DHCP Leases */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">DHCP Leases</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-xs">IP</TableHead>
-                  <TableHead className="text-xs">Hostname</TableHead>
-                  <TableHead className="text-xs">Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {dhcpLeases.map((l) => (
-                  <TableRow key={l.ip}>
-                    <TableCell className="text-xs font-mono py-2">{l.ip}</TableCell>
-                    <TableCell className="text-xs py-2">{l.hostname}</TableCell>
-                    <TableCell className="py-2"><StatusBadge status={l.status} /></TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-
-        {/* IPsec Tunnels */}
-        <Card className="md:col-span-2">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">IPsec Tunnels</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-xs">Name</TableHead>
-                  <TableHead className="text-xs">Remote Gateway</TableHead>
-                  <TableHead className="text-xs">Phase 1</TableHead>
-                  <TableHead className="text-xs">Phase 2</TableHead>
-                  <TableHead className="text-xs">Incoming</TableHead>
-                  <TableHead className="text-xs">Outgoing</TableHead>
-                  <TableHead className="text-xs">Uptime</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {ipsecTunnels.map((t) => (
-                  <TableRow key={t.name}>
-                    <TableCell className="text-xs font-medium py-2">{t.name}</TableCell>
-                    <TableCell className="text-xs font-mono py-2">{t.remote}</TableCell>
-                    <TableCell className="py-2"><StatusBadge status={t.phase1} /></TableCell>
-                    <TableCell className="py-2"><StatusBadge status={t.phase2} /></TableCell>
-                    <TableCell className="text-xs py-2">{t.incoming}</TableCell>
-                    <TableCell className="text-xs py-2">{t.outgoing}</TableCell>
-                    <TableCell className="text-xs py-2">{t.uptime}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
