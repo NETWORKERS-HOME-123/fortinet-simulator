@@ -10,6 +10,9 @@ import {
   AppWindow,
   AlertTriangle,
   Eye,
+  Wifi,
+  ChevronDown,
+  Cloud,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -22,14 +25,27 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 const dashboardItems = [
   { title: "Status", url: "/", icon: LayoutDashboard },
-  { title: "Network", url: "/network", icon: Activity },
   { title: "Security", url: "/security", icon: Shield },
-  { title: "Users & Devices", url: "/users-devices", icon: Users },
+  {
+    title: "Network",
+    url: "/network",
+    icon: Activity,
+    children: [
+      { title: "Overview", url: "/network" },
+      { title: "SSL-VPN Monitor", url: "/network/ssl-vpn" },
+    ],
+  },
+  { title: "Assets & Identities", url: "/assets-identities", icon: Users },
+  { title: "WiFi", url: "/wifi", icon: Wifi },
   { title: "VPN", url: "/vpn", icon: Lock },
 ];
 
@@ -40,6 +56,8 @@ const monitorItems = [
   { title: "Applications", url: "/monitors/applications", icon: AppWindow },
   { title: "Threats", url: "/monitors/threats", icon: AlertTriangle },
   { title: "VPN Monitor", url: "/monitors/vpn", icon: Eye },
+  { title: "Top Websites", url: "/monitors/top-websites", icon: Globe },
+  { title: "Cloud Apps", url: "/monitors/cloud-apps", icon: Cloud },
 ];
 
 export function AppSidebar() {
@@ -48,7 +66,7 @@ export function AppSidebar() {
   const location = useLocation();
 
   const isActive = (path: string) =>
-    path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
+    path === "/" ? location.pathname === "/" : location.pathname === path;
 
   return (
     <Sidebar collapsible="icon">
@@ -66,16 +84,41 @@ export function AppSidebar() {
           <SidebarGroupLabel>Dashboard</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {dashboardItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={isActive(item.url)}>
-                    <NavLink to={item.url} end={item.url === "/"}>
-                      <item.icon className="h-4 w-4" />
-                      {!collapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {dashboardItems.map((item) =>
+                item.children ? (
+                  <Collapsible key={item.title} defaultOpen={location.pathname.startsWith(item.url)}>
+                    <SidebarMenuItem>
+                      <CollapsibleTrigger asChild>
+                        <SidebarMenuButton isActive={location.pathname.startsWith(item.url)}>
+                          <item.icon className="h-4 w-4" />
+                          {!collapsed && <span className="flex-1">{item.title}</span>}
+                          {!collapsed && <ChevronDown className="h-3 w-3 transition-transform" />}
+                        </SidebarMenuButton>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <SidebarMenuSub>
+                          {item.children.map((child) => (
+                            <SidebarMenuSubItem key={child.url}>
+                              <SidebarMenuSubButton asChild isActive={isActive(child.url)}>
+                                <NavLink to={child.url}>{child.title}</NavLink>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          ))}
+                        </SidebarMenuSub>
+                      </CollapsibleContent>
+                    </SidebarMenuItem>
+                  </Collapsible>
+                ) : (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild isActive={isActive(item.url)}>
+                      <NavLink to={item.url} end={item.url === "/"}>
+                        <item.icon className="h-4 w-4" />
+                        {!collapsed && <span>{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
