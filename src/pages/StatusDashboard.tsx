@@ -96,6 +96,7 @@ function WidgetHeader({ title, icon, onRemove, children }: { title: string; icon
 }
 
 export default function StatusDashboard() {
+  const { width, containerRef, mounted } = useContainerWidth();
   const [sessionData, setSessionData] = useState(initialSessionData);
   const [systemTime, setSystemTime] = useState(new Date());
   const [layouts, setLayouts] = useState<LayoutItem[]>(loadLayout);
@@ -382,17 +383,20 @@ export default function StatusDashboard() {
         <AddWidgetDialog widgets={addableWidgets} onAdd={handleAddWidget} />
       </div>
 
-      <ResponsiveGridLayout
-        className="layout"
-        layouts={{ lg: filteredLayouts }}
-        breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-        cols={{ lg: 4, md: 4, sm: 2, xs: 2, xxs: 1 }}
-        rowHeight={40}
-        onLayoutChange={handleLayoutChange}
-        dragConfig={{ handle: ".drag-handle" }}
-        compactor={verticalCompactor}
-        margin={[16, 16]}
-      >
+      <div ref={containerRef}>
+        {mounted && (
+          <ResponsiveGridLayout
+            width={width}
+            className="layout"
+            layouts={{ lg: filteredLayouts }}
+            breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+            cols={{ lg: 4, md: 4, sm: 2, xs: 2, xxs: 1 }}
+            rowHeight={40}
+            onLayoutChange={handleLayoutChange}
+            dragConfig={{ handle: ".drag-handle" }}
+            compactor={verticalCompactor}
+            margin={[16, 16]}
+          >
         {visibleWidgets.map(id => (
           <div key={id}>
             {renderWidget(id)}
