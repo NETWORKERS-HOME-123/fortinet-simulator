@@ -11,7 +11,7 @@ import { Server, Shield, CheckCircle, AlertTriangle, Wifi, ShieldCheck, UserCog,
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { ResponsiveGridLayout, verticalCompactor, type LayoutItem } from "react-grid-layout";
-import type { Layout } from "react-grid-layout";
+import type { LayoutItem, Layout } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 
@@ -41,7 +41,7 @@ const statusWidgetsMeta: { id: WidgetId; name: string; description: string }[] =
   { id: "alerts", name: "Alert Console", description: "Recent alerts and logs" },
 ];
 
-const defaultLayout: Layout[] = [
+const defaultLayout: LayoutItem[] = [
   { i: "sysinfo", x: 0, y: 0, w: 2, h: 4 },
   { i: "cpu", x: 2, y: 0, w: 1, h: 4 },
   { i: "memory", x: 3, y: 0, w: 1, h: 4 },
@@ -55,7 +55,7 @@ const defaultLayout: Layout[] = [
   { i: "alerts", x: 0, y: 18, w: 4, h: 5 },
 ];
 
-function loadLayout(): Layout[] {
+function loadLayout(): LayoutItem[] {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) return JSON.parse(saved);
@@ -98,7 +98,7 @@ function WidgetHeader({ title, icon, onRemove, children }: { title: string; icon
 export default function StatusDashboard() {
   const [sessionData, setSessionData] = useState(initialSessionData);
   const [systemTime, setSystemTime] = useState(new Date());
-  const [layouts, setLayouts] = useState<Layout[]>(loadLayout);
+  const [layouts, setLayouts] = useState<LayoutItem[]>(loadLayout);
   const [visibleWidgets, setVisibleWidgets] = useState<WidgetId[]>(loadVisible);
 
   useEffect(() => {
@@ -117,9 +117,10 @@ export default function StatusDashboard() {
     return () => { clearInterval(clockInterval); clearInterval(sessionInterval); };
   }, []);
 
-  const handleLayoutChange = useCallback((newLayout: Layout[]) => {
-    setLayouts(newLayout);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(newLayout));
+  const handleLayoutChange = useCallback((newLayout: Layout) => {
+    const mutableLayout = [...newLayout];
+    setLayouts(mutableLayout);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(mutableLayout));
   }, []);
 
   const handleRemoveWidget = useCallback((id: WidgetId) => {
@@ -388,9 +389,8 @@ export default function StatusDashboard() {
         cols={{ lg: 4, md: 4, sm: 2, xs: 2, xxs: 1 }}
         rowHeight={40}
         onLayoutChange={handleLayoutChange}
-        draggableHandle=".drag-handle"
-        isResizable={true}
-        compactType="vertical"
+        dragConfig={{ handle: ".drag-handle" }}
+        compactor={verticalCompactor}
         margin={[16, 16]}
       >
         {visibleWidgets.map(id => (
