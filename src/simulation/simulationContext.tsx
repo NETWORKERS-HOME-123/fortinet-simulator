@@ -20,6 +20,13 @@ export interface FirewallPolicy {
     ips: string;
     webFilter: string;
     appControl: string;
+    dnsFilter: string;
+    fileFilter: string;
+    emailFilter: string;
+    dlp: string;
+    voip: string;
+    icap: string;
+    sslInspection: string;
   };
   hitCount: number;
 }
