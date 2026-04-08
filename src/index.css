@@ -92,8 +92,8 @@
 }
 
 /* react-grid-layout overrides */
-.react-grid-item {
-  overflow: hidden;
+.react-grid-item > div {
+  height: 100%;
 }
 .react-grid-item > .react-resizable-handle {
   z-index: 10;
