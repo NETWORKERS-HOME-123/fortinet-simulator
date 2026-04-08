@@ -397,12 +397,14 @@ export default function StatusDashboard() {
             compactor={verticalCompactor}
             margin={[16, 16]}
           >
-        {visibleWidgets.map(id => (
-          <div key={id}>
-            {renderWidget(id)}
-          </div>
-        ))}
-      </ResponsiveGridLayout>
+            {visibleWidgets.map(id => (
+              <div key={id}>
+                {renderWidget(id)}
+              </div>
+            ))}
+          </ResponsiveGridLayout>
+        )}
+      </div>
     </DashboardLayout>
   );
 }
