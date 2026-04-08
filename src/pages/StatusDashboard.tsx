@@ -42,17 +42,17 @@ const statusWidgetsMeta: { id: WidgetId; name: string; description: string }[] =
 ];
 
 const defaultLayout: LayoutItem[] = [
-  { i: "sysinfo", x: 0, y: 0, w: 2, h: 4 },
-  { i: "cpu", x: 2, y: 0, w: 1, h: 4 },
-  { i: "memory", x: 3, y: 0, w: 1, h: 4 },
-  { i: "licenses", x: 0, y: 4, w: 2, h: 5 },
-  { i: "fortiguard", x: 2, y: 4, w: 2, h: 4 },
-  { i: "sessions", x: 0, y: 9, w: 2, h: 5 },
-  { i: "admins", x: 2, y: 8, w: 1, h: 5 },
-  { i: "vdoms", x: 3, y: 8, w: 1, h: 5 },
-  { i: "fabric", x: 0, y: 14, w: 2, h: 4 },
-  { i: "ha", x: 2, y: 13, w: 1, h: 4 },
-  { i: "alerts", x: 0, y: 18, w: 4, h: 5 },
+  { i: "sysinfo", x: 0, y: 0, w: 2, h: 5, minH: 4, minW: 2 },
+  { i: "cpu", x: 2, y: 0, w: 1, h: 6, minH: 5, minW: 1 },
+  { i: "memory", x: 3, y: 0, w: 1, h: 6, minH: 5, minW: 1 },
+  { i: "licenses", x: 0, y: 5, w: 2, h: 7, minH: 4, minW: 2 },
+  { i: "fortiguard", x: 2, y: 6, w: 2, h: 5, minH: 3, minW: 1 },
+  { i: "sessions", x: 0, y: 12, w: 2, h: 6, minH: 5, minW: 2 },
+  { i: "admins", x: 2, y: 11, w: 1, h: 6, minH: 4, minW: 1 },
+  { i: "vdoms", x: 3, y: 11, w: 1, h: 6, minH: 4, minW: 1 },
+  { i: "fabric", x: 0, y: 18, w: 2, h: 5, minH: 3, minW: 1 },
+  { i: "ha", x: 2, y: 17, w: 1, h: 5, minH: 3, minW: 1 },
+  { i: "alerts", x: 0, y: 23, w: 4, h: 6, minH: 4, minW: 2 },
 ];
 
 function loadLayout(): LayoutItem[] {
