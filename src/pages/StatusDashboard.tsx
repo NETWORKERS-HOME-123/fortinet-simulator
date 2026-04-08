@@ -3,10 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GaugeWidget } from "@/components/widgets/GaugeWidget";
 import { StatusBadge } from "@/components/widgets/StatusBadge";
 import { TimeRangeSelector } from "@/components/widgets/TimeRangeSelector";
-import { systemInfo, licenses, cpuUsage, memoryUsage, fabricDevices, sessionData as initialSessionData, alertLogs } from "@/data/mockData";
+import { systemInfo, licenses, cpuUsage, memoryUsage, fabricDevices, sessionData as initialSessionData, alertLogs, fortiGuardInfo, adminUsers, virtualDomains } from "@/data/mockData";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { Server, Shield, CheckCircle, AlertTriangle, XCircle, Wifi } from "lucide-react";
+import { Server, Shield, CheckCircle, AlertTriangle, Wifi, ShieldCheck, UserCog, Layers } from "lucide-react";
 import { useState, useEffect } from "react";
 
 function jitter(val: number, pct = 0.1) {
@@ -34,7 +34,6 @@ export default function StatusDashboard() {
     return () => clearInterval(interval);
   }, []);
 
-export default function StatusDashboard() {
   return (
     <DashboardLayout title="Status Dashboard" subtitle={systemInfo.hostname}>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -92,6 +91,25 @@ export default function StatusDashboard() {
           </CardContent>
         </Card>
 
+        {/* FortiGuard Info */}
+        <Card className="md:col-span-2">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-primary" /> FortiGuard Information
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div><span className="text-muted-foreground">AV Engine:</span> <span className="font-medium">{fortiGuardInfo.avVersion}</span></div>
+              <div><span className="text-muted-foreground">IPS Engine:</span> <span className="font-medium">{fortiGuardInfo.ipsVersion}</span></div>
+              <div><span className="text-muted-foreground">App DB:</span> <span className="font-medium">{fortiGuardInfo.appDbVersion}</span></div>
+              <div><span className="text-muted-foreground">IPS DB:</span> <span className="font-medium">{fortiGuardInfo.ipsDbVersion}</span></div>
+              <div><span className="text-muted-foreground">Last Update:</span> <span className="font-medium">{fortiGuardInfo.lastUpdate}</span></div>
+              <div><span className="text-muted-foreground">Update Server:</span> <span className="font-mono text-xs">{fortiGuardInfo.updateServer}</span></div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Session Rate */}
         <Card className="md:col-span-2">
           <CardHeader className="pb-2 flex flex-row items-center justify-between">
@@ -109,6 +127,56 @@ export default function StatusDashboard() {
                 <Area type="monotone" dataKey="ipv6" stroke="hsl(var(--success))" fill="hsl(var(--success) / 0.2)" />
               </AreaChart>
             </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Administrators */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <UserCog className="h-4 w-4 text-primary" /> Administrators
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {adminUsers.map((a) => (
+                <div key={a.username} className="flex items-center justify-between p-2 rounded-md bg-muted/50 text-xs">
+                  <div>
+                    <div className="font-medium">{a.username}</div>
+                    <div className="text-muted-foreground">{a.profile} • {a.ip}</div>
+                  </div>
+                  <div className="text-muted-foreground text-right">
+                    <div>{a.loginTime}</div>
+                    <StatusBadge status="active" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Virtual Domains */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Layers className="h-4 w-4 text-primary" /> Virtual Domains
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {virtualDomains.map((v) => (
+                <div key={v.name} className="flex items-center justify-between p-2 rounded-md bg-muted/50 text-xs">
+                  <div>
+                    <div className="font-medium">{v.name}</div>
+                    <div className="text-muted-foreground">{v.interfaces} interfaces</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-muted-foreground">{v.sessions.toLocaleString()} sessions</div>
+                    <StatusBadge status={v.status} />
+                  </div>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
 

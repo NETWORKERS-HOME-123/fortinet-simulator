@@ -4,8 +4,10 @@ import { StatusBadge } from "@/components/widgets/StatusBadge";
 import { TimeRangeSelector } from "@/components/widgets/TimeRangeSelector";
 import { topThreats, compromisedHosts, sandboxStats, webFilterCategories, ipsSignatures, avThreats } from "@/data/mockData";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Bar, BarChart, Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis, PieChart, Pie, Cell, Legend } from "recharts";
+import { Bar, BarChart, Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis, PieChart, Pie, Cell } from "recharts";
 import { Shield, Bug, FileSearch, Filter } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useState } from "react";
 
 const PIE_COLORS = [
   "hsl(var(--primary))",
@@ -18,7 +20,11 @@ const PIE_COLORS = [
   "hsl(38, 92%, 70%)",
 ];
 
+type CompromisedHost = typeof compromisedHosts[number];
+
 export default function SecurityDashboard() {
+  const [selectedHost, setSelectedHost] = useState<CompromisedHost | null>(null);
+
   return (
     <DashboardLayout title="Security Dashboard" subtitle="Threat Intelligence & Protection">
       <div className="grid gap-4 md:grid-cols-2">
@@ -84,7 +90,7 @@ export default function SecurityDashboard() {
               </TableHeader>
               <TableBody>
                 {compromisedHosts.map((h) => (
-                  <TableRow key={h.ip}>
+                  <TableRow key={h.ip} className="cursor-pointer" onClick={() => setSelectedHost(h)}>
                     <TableCell className="text-xs font-mono py-2">{h.ip}</TableCell>
                     <TableCell className="text-xs py-2">{h.hostname}</TableCell>
                     <TableCell className="py-2"><StatusBadge status={h.severity} /></TableCell>
@@ -170,6 +176,53 @@ export default function SecurityDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Compromised Host Detail Dialog */}
+      <Dialog open={!!selectedHost} onOpenChange={() => setSelectedHost(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-sm">
+              <Bug className="h-4 w-4 text-destructive" />
+              {selectedHost?.hostname} — {selectedHost?.ip}
+            </DialogTitle>
+          </DialogHeader>
+          {selectedHost && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div><span className="text-muted-foreground">Threat:</span> <span className="font-medium">{selectedHost.threat}</span></div>
+                <div><span className="text-muted-foreground">Severity:</span> <StatusBadge status={selectedHost.severity} /></div>
+                <div><span className="text-muted-foreground">Detected:</span> <span className="font-medium">{selectedHost.detectedAt}</span></div>
+                <div><span className="text-muted-foreground">Status:</span> <StatusBadge status={selectedHost.status} /></div>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium mb-2">Associated Sessions</h4>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-xs">Dest IP</TableHead>
+                      <TableHead className="text-xs">Port</TableHead>
+                      <TableHead className="text-xs">Protocol</TableHead>
+                      <TableHead className="text-xs">Policy</TableHead>
+                      <TableHead className="text-xs">App</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {selectedHost.sessions.map((s, i) => (
+                      <TableRow key={i}>
+                        <TableCell className="text-xs font-mono py-1">{s.destIp}</TableCell>
+                        <TableCell className="text-xs py-1">{s.destPort}</TableCell>
+                        <TableCell className="text-xs py-1">{s.protocol}</TableCell>
+                        <TableCell className="text-xs py-1">{s.policy}</TableCell>
+                        <TableCell className="text-xs py-1">{s.application}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }

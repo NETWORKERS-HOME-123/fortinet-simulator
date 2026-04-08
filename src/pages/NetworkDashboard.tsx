@@ -38,7 +38,6 @@ export default function NetworkDashboard() {
     return () => clearInterval(interval);
   }, []);
 
-export default function NetworkDashboard() {
   return (
     <DashboardLayout title="Network Dashboard" subtitle="Traffic & Interface Monitoring">
       <div className="grid gap-4 md:grid-cols-2">

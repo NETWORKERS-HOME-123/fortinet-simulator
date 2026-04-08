@@ -4,8 +4,33 @@ import { StatusBadge } from "@/components/widgets/StatusBadge";
 import { fortiviewSources } from "@/data/mockData";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ArrowUpDown } from "lucide-react";
+import { useState } from "react";
+
+type Source = typeof fortiviewSources[number];
+type SortKey = "ip" | "sessions" | "threatScore";
 
 export default function SourcesMonitor() {
+  const [sortKey, setSortKey] = useState<SortKey>("sessions");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [selected, setSelected] = useState<Source | null>(null);
+
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) setSortDir(d => d === "asc" ? "desc" : "asc");
+    else { setSortKey(key); setSortDir("desc"); }
+  };
+
+  const sorted = [...fortiviewSources].sort((a, b) => {
+    const va = a[sortKey];
+    const vb = b[sortKey];
+    const cmp = typeof va === "number" ? (va as number) - (vb as number) : String(va).localeCompare(String(vb));
+    return sortDir === "asc" ? cmp : -cmp;
+  });
+
+  const threatColor = (score: number) =>
+    score > 70 ? "hsl(var(--destructive))" : score > 40 ? "hsl(var(--warning))" : "hsl(var(--success))";
+
   return (
     <DashboardLayout title="FortiView: Sources" subtitle="Top source IPs by sessions & bandwidth">
       <Card>
@@ -16,17 +41,23 @@ export default function SourcesMonitor() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-xs">IP Address</TableHead>
+                <TableHead className="text-xs cursor-pointer" onClick={() => handleSort("ip")}>
+                  <span className="flex items-center gap-1">IP Address <ArrowUpDown className="h-3 w-3" /></span>
+                </TableHead>
                 <TableHead className="text-xs">Hostname</TableHead>
                 <TableHead className="text-xs">Country</TableHead>
-                <TableHead className="text-xs">Sessions</TableHead>
+                <TableHead className="text-xs cursor-pointer" onClick={() => handleSort("sessions")}>
+                  <span className="flex items-center gap-1">Sessions <ArrowUpDown className="h-3 w-3" /></span>
+                </TableHead>
                 <TableHead className="text-xs">Bandwidth</TableHead>
-                <TableHead className="text-xs">Threat Score</TableHead>
+                <TableHead className="text-xs cursor-pointer" onClick={() => handleSort("threatScore")}>
+                  <span className="flex items-center gap-1">Threat Score <ArrowUpDown className="h-3 w-3" /></span>
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {fortiviewSources.map((s) => (
-                <TableRow key={s.ip}>
+              {sorted.map((s) => (
+                <TableRow key={s.ip} className="cursor-pointer" onClick={() => setSelected(s)}>
                   <TableCell className="text-xs font-mono py-2">{s.ip}</TableCell>
                   <TableCell className="text-xs py-2">{s.hostname}</TableCell>
                   <TableCell className="text-xs py-2">{s.country}</TableCell>
@@ -34,8 +65,8 @@ export default function SourcesMonitor() {
                   <TableCell className="text-xs py-2">{s.bandwidth}</TableCell>
                   <TableCell className="py-2">
                     <div className="flex items-center gap-2">
-                      <Progress value={s.threatScore} className="h-1.5 w-16" />
-                      <span className="text-xs">{s.threatScore}</span>
+                      <Progress value={s.threatScore} className="h-1.5 w-16" style={{ "--progress-color": threatColor(s.threatScore) } as React.CSSProperties} />
+                      <span className="text-xs font-medium" style={{ color: threatColor(s.threatScore) }}>{s.threatScore}</span>
                       {s.threatScore > 70 && <StatusBadge status="critical" />}
                       {s.threatScore > 40 && s.threatScore <= 70 && <StatusBadge status="warning" />}
                     </div>
@@ -46,6 +77,24 @@ export default function SourcesMonitor() {
           </Table>
         </CardContent>
       </Card>
+
+      <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-sm">Source Detail — {selected?.ip}</DialogTitle>
+          </DialogHeader>
+          {selected && (
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div><span className="text-muted-foreground">IP:</span> <span className="font-mono">{selected.ip}</span></div>
+              <div><span className="text-muted-foreground">Hostname:</span> {selected.hostname}</div>
+              <div><span className="text-muted-foreground">Country:</span> {selected.country}</div>
+              <div><span className="text-muted-foreground">Sessions:</span> {selected.sessions.toLocaleString()}</div>
+              <div><span className="text-muted-foreground">Bandwidth:</span> {selected.bandwidth}</div>
+              <div><span className="text-muted-foreground">Threat Score:</span> <span style={{ color: threatColor(selected.threatScore) }}>{selected.threatScore}/100</span></div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }
