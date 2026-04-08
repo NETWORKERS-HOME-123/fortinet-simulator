@@ -3,10 +3,36 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GaugeWidget } from "@/components/widgets/GaugeWidget";
 import { StatusBadge } from "@/components/widgets/StatusBadge";
 import { TimeRangeSelector } from "@/components/widgets/TimeRangeSelector";
-import { systemInfo, licenses, cpuUsage, memoryUsage, fabricDevices, sessionData, alertLogs } from "@/data/mockData";
+import { systemInfo, licenses, cpuUsage, memoryUsage, fabricDevices, sessionData as initialSessionData, alertLogs } from "@/data/mockData";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Server, Shield, CheckCircle, AlertTriangle, XCircle, Wifi } from "lucide-react";
+import { useState, useEffect } from "react";
+
+function jitter(val: number, pct = 0.1) {
+  return Math.max(0, Math.round(val * (1 + (Math.random() - 0.5) * 2 * pct)));
+}
+
+let timeCounter = 0;
+
+export default function StatusDashboard() {
+  const [sessionData, setSessionData] = useState(initialSessionData);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSessionData(prev => {
+        const last = prev[prev.length - 1];
+        timeCounter++;
+        const next = [...prev.slice(1), {
+          time: `${String(timeCounter).padStart(2, '0')}:00`,
+          ipv4: jitter(last.ipv4),
+          ipv6: jitter(last.ipv6),
+        }];
+        return next;
+      });
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
 export default function StatusDashboard() {
   return (
