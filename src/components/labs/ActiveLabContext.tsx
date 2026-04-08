@@ -170,8 +170,20 @@ export function ActiveLabProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+const defaultContext: ActiveLabContextType = {
+  activeLab: null,
+  completed: new Set(),
+  hintsShown: {},
+  elapsed: 0,
+  isFinished: false,
+  startLabSession: () => null,
+  stopLab: () => {},
+  finishLab: () => {},
+  showHint: () => {},
+  resetLab: () => {},
+};
+
 export function useActiveLab() {
   const ctx = useContext(ActiveLabContext);
-  if (!ctx) throw new Error("useActiveLab must be within ActiveLabProvider");
-  return ctx;
+  return ctx ?? defaultContext;
 }
