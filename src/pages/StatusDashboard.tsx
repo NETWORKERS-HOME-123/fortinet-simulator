@@ -10,11 +10,9 @@ import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YA
 import { Server, Shield, CheckCircle, AlertTriangle, Wifi, ShieldCheck, UserCog, Layers, Clock, Settings, X, GripVertical } from "lucide-react";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Responsive, WidthProvider, Layout } from "react-grid-layout";
+import { ResponsiveGridLayout, type LayoutItem } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
-
-const ResponsiveGridLayout = WidthProvider(Responsive);
 
 function jitter(val: number, pct = 0.1) {
   return Math.max(0, Math.round(val * (1 + (Math.random() - 0.5) * 2 * pct)));
