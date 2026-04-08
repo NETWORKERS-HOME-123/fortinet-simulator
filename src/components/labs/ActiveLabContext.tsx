@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { scenarios, LabScenario, ValidationState } from "@/simulation/scenarios";
 import { useSimulation } from "@/simulation/simulationContext";
 import { startLab, completeLab, completeObjective, loadProgress } from "@/simulation/progressStore";
@@ -14,11 +14,13 @@ interface ActiveLabState {
 }
 
 interface ActiveLabContextType extends ActiveLabState {
-  startLabSession: (labId: string) => string | null; // returns first nav path
+  startLabSession: (labId: string) => string | null;
   stopLab: () => void;
   finishLab: () => void;
   showHint: (objId: string) => void;
   resetLab: () => void;
+  navigateToObjective: (objId: string) => void;
+  currentObjectiveIndex: number;
 }
 
 const ActiveLabContext = createContext<ActiveLabContextType | null>(null);
@@ -26,13 +28,18 @@ const ActiveLabContext = createContext<ActiveLabContextType | null>(null);
 export function ActiveLabProvider({ children }: { children: React.ReactNode }) {
   const { state, cliHistory, ...ctx } = useSimulation();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const [activeLab, setActiveLab] = useState<LabScenario | null>(null);
   const [completed, setCompleted] = useState<Set<string>>(new Set());
   const [hintsShown, setHintsShown] = useState<Record<string, number>>({});
   const [elapsed, setElapsed] = useState(0);
   const [isFinished, setIsFinished] = useState(false);
-  const startedRef = useRef(false);
+
+  // Compute the index of the first incomplete objective
+  const currentObjectiveIndex = activeLab
+    ? activeLab.objectives.findIndex(obj => !completed.has(obj.id))
+    : -1;
 
   // Timer
   useEffect(() => {
@@ -70,28 +77,33 @@ export function ActiveLabProvider({ children }: { children: React.ReactNode }) {
 
     if (changed) {
       setCompleted(newCompleted);
-      const newCount = newCompleted.size - completed.size;
-      if (newCount === 1) toast.success("✅ Objective completed!");
-      else if (newCount > 1) toast.success(`✅ ${newCount} objectives completed!`);
+      const justCompleted = newCompleted.size - completed.size;
+      if (justCompleted === 1) toast.success("✅ Objective completed!");
+      else if (justCompleted > 1) toast.success(`✅ ${justCompleted} objectives completed!`);
+
+      // Auto-navigate to next incomplete objective's page
+      if (activeLab) {
+        const nextObj = activeLab.objectives.find(obj => !newCompleted.has(obj.id));
+        if (nextObj && nextObj.navPath && nextObj.navPath !== location.pathname) {
+          // Small delay so user sees the completion toast first
+          setTimeout(() => navigate(nextObj.navPath), 800);
+        }
+      }
     }
-  }, [state, cliHistory, location.pathname, activeLab, isFinished, completed]);
+  }, [state, cliHistory, location.pathname, activeLab, isFinished, completed, navigate]);
 
   const startLabSession = useCallback((labId: string): string | null => {
     const scenario = scenarios.find(s => s.id === labId);
     if (!scenario) return null;
 
-    // Reset state
     setCompleted(new Set());
     setHintsShown({});
     setElapsed(0);
     setIsFinished(false);
-    startedRef.current = true;
 
-    // Load existing progress or start fresh
     const progress = loadProgress();
     const existing = progress.labs[labId];
     if (existing && existing.status === "completed") {
-      // Re-start completed lab
       startLab(labId);
     } else if (existing) {
       setCompleted(new Set(existing.objectivesCompleted));
@@ -99,35 +111,23 @@ export function ActiveLabProvider({ children }: { children: React.ReactNode }) {
       startLab(labId);
     }
 
-    // Run onStart hook
     if (scenario.onStart) {
       scenario.onStart(ctx);
     }
 
     setActiveLab(scenario);
 
-    // Return the path for the first objective's actionHint
-    const firstObj = scenario.objectives[0];
-    if (firstObj) {
-      // Try to extract a navigation path from the validate function by testing known paths
-      const knownPaths = [
-        "/config/interfaces", "/config/policies", "/config/addresses",
-        "/security", "/network", "/network/ipsec", "/network/routing",
-        "/network/dhcp", "/monitors/ssl-vpn", "/", "/vpn", "/wifi",
-        "/monitors/sessions", "/monitors/applications",
-      ];
-      const emptyState: ValidationState = {
-        policies: [], interfaces: [], addressObjects: [],
-        alertLogs: [], ipsecTunnels: [], compromisedHosts: [],
-      };
-      for (const path of knownPaths) {
-        try {
-          if (firstObj.validate(emptyState, [], path)) return path;
-        } catch {}
-      }
-    }
-    return null;
+    // Return the explicit startPath
+    return scenario.startPath;
   }, [ctx]);
+
+  const navigateToObjective = useCallback((objId: string) => {
+    if (!activeLab) return;
+    const obj = activeLab.objectives.find(o => o.id === objId);
+    if (obj?.navPath) {
+      navigate(obj.navPath);
+    }
+  }, [activeLab, navigate]);
 
   const stopLab = useCallback(() => {
     setActiveLab(null);
@@ -156,14 +156,17 @@ export function ActiveLabProvider({ children }: { children: React.ReactNode }) {
     if (!activeLab) return;
     const labId = activeLab.id;
     stopLab();
-    // Re-start after a tick
-    setTimeout(() => startLabSession(labId), 50);
-  }, [activeLab, stopLab, startLabSession]);
+    setTimeout(() => {
+      const path = startLabSession(labId);
+      if (path) navigate(path);
+    }, 50);
+  }, [activeLab, stopLab, startLabSession, navigate]);
 
   return (
     <ActiveLabContext.Provider value={{
       activeLab, completed, hintsShown, elapsed, isFinished,
       startLabSession, stopLab, finishLab, showHint, resetLab,
+      navigateToObjective, currentObjectiveIndex,
     }}>
       {children}
     </ActiveLabContext.Provider>
@@ -181,6 +184,8 @@ const defaultContext: ActiveLabContextType = {
   finishLab: () => {},
   showHint: () => {},
   resetLab: () => {},
+  navigateToObjective: () => {},
+  currentObjectiveIndex: -1,
 };
 
 export function useActiveLab() {

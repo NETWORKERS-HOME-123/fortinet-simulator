@@ -2,19 +2,26 @@ import { useActiveLab } from "./ActiveLabContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import {
-  CheckCircle, Circle, Lightbulb, Timer, Trophy, X, MapPin,
-  ChevronDown, ChevronUp, RotateCcw,
+  CheckCircle, Circle, Lightbulb, Timer, Trophy, X, ArrowRight,
+  ChevronDown, ChevronUp, RotateCcw, Navigation,
 } from "lucide-react";
 import { useState } from "react";
+import { useLocation } from "react-router-dom";
 
 export function ActiveLabPanel() {
-  const { activeLab, completed, hintsShown, elapsed, isFinished, finishLab, showHint, stopLab, resetLab } = useActiveLab();
+  const {
+    activeLab, completed, hintsShown, elapsed, isFinished,
+    finishLab, showHint, stopLab, resetLab, navigateToObjective, currentObjectiveIndex,
+  } = useActiveLab();
   const [collapsed, setCollapsed] = useState(false);
+  const location = useLocation();
 
   if (!activeLab) return null;
 
   const allDone = completed.size === activeLab.objectives.length;
+  const progressPct = (completed.size / activeLab.objectives.length) * 100;
   const formatTime = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
   if (collapsed) {
@@ -38,13 +45,27 @@ export function ActiveLabPanel() {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 w-96 max-h-[70vh] overflow-hidden">
-      <Card className="shadow-xl border-primary/30 flex flex-col max-h-[70vh]">
+    <div className="fixed bottom-4 right-4 z-50 w-[420px] max-h-[75vh] overflow-hidden">
+      <Card className="shadow-xl border-primary/30 flex flex-col max-h-[75vh]">
         {/* Header */}
-        <div className="p-3 border-b bg-card flex items-center justify-between shrink-0">
-          <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-semibold truncate">{activeLab.title}</h3>
-            <div className="flex items-center gap-2 mt-0.5">
+        <div className="p-3 border-b bg-card shrink-0">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-semibold truncate flex-1">{activeLab.title}</h3>
+            <div className="flex items-center gap-0.5">
+              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={resetLab} title="Reset Lab">
+                <RotateCcw className="h-3 w-3" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setCollapsed(true)} title="Minimize">
+                <ChevronDown className="h-3 w-3" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={stopLab} title="Close">
+                <X className="h-3 w-3" />
+              </Button>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <Progress value={progressPct} className="h-1.5 flex-1" />
+            <div className="flex items-center gap-1.5 shrink-0">
               <Badge variant="outline" className="text-[10px] flex items-center gap-0.5">
                 <Timer className="h-2.5 w-2.5" />{formatTime(elapsed)}
               </Badge>
@@ -53,69 +74,103 @@ export function ActiveLabPanel() {
               </Badge>
             </div>
           </div>
-          <div className="flex items-center gap-0.5">
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={resetLab} title="Reset Lab">
-              <RotateCcw className="h-3 w-3" />
-            </Button>
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setCollapsed(true)} title="Minimize">
-              <ChevronDown className="h-3.5 w-3.5" />
-            </Button>
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={stopLab} title="Close">
-              <X className="h-3.5 w-3.5" />
-            </Button>
-          </div>
         </div>
 
         {/* Objectives */}
-        <div className="overflow-y-auto p-3 space-y-2 flex-1">
+        <div className="overflow-y-auto p-3 space-y-1.5 flex-1">
           {isFinished ? (
-            <div className="text-center py-4 space-y-2">
-              <Trophy className="h-8 w-8 text-primary mx-auto" />
-              <h4 className="font-semibold text-sm">Lab Complete!</h4>
+            <div className="text-center py-6 space-y-3">
+              <Trophy className="h-10 w-10 text-primary mx-auto" />
+              <h4 className="font-semibold">Lab Complete!</h4>
               <p className="text-xs text-muted-foreground">
-                Time: {formatTime(elapsed)} · Hints: {Object.values(hintsShown).reduce((s, v) => s + v, 0)}
+                Time: {formatTime(elapsed)} · Hints used: {Object.values(hintsShown).reduce((s, v) => s + v, 0)}
               </p>
-              <Button variant="outline" size="sm" onClick={stopLab}>Close</Button>
+              <div className="flex gap-2 justify-center">
+                <Button variant="outline" size="sm" onClick={resetLab}>Try Again</Button>
+                <Button variant="outline" size="sm" onClick={stopLab}>Close</Button>
+              </div>
             </div>
           ) : (
             activeLab.objectives.map((obj, idx) => {
               const isDone = completed.has(obj.id);
+              const isCurrent = idx === currentObjectiveIndex;
+              const isOnCorrectPage = obj.navPath === location.pathname;
               const hints = hintsShown[obj.id] || 0;
+
               return (
-                <div key={obj.id} className={`rounded-md border p-2.5 transition-colors ${isDone ? "bg-primary/5 border-primary/30" : ""}`}>
+                <div
+                  key={obj.id}
+                  className={`rounded-lg border p-2.5 transition-all ${
+                    isDone
+                      ? "bg-primary/5 border-primary/30"
+                      : isCurrent
+                      ? "bg-accent/50 border-primary/50 ring-1 ring-primary/20"
+                      : "opacity-60"
+                  }`}
+                >
                   <div className="flex items-start gap-2">
+                    {/* Status icon */}
                     <div className="mt-0.5 shrink-0">
                       {isDone ? (
                         <CheckCircle className="h-4 w-4 text-primary" />
+                      ) : isCurrent ? (
+                        <div className="h-4 w-4 rounded-full border-2 border-primary flex items-center justify-center">
+                          <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                        </div>
                       ) : (
-                        <Circle className="h-4 w-4 text-muted-foreground animate-pulse" />
+                        <Circle className="h-4 w-4 text-muted-foreground/50" />
                       )}
                     </div>
-                    <div className="flex-1 min-w-0 space-y-0.5">
+
+                    {/* Content */}
+                    <div className="flex-1 min-w-0 space-y-1">
                       <div className="flex items-center justify-between gap-1">
-                        <h4 className="text-xs font-medium">{idx + 1}. {obj.title}</h4>
+                        <h4 className={`text-xs font-medium ${isDone ? "line-through text-muted-foreground" : ""}`}>
+                          Step {idx + 1}: {obj.title}
+                        </h4>
                         {!isDone && (
-                          <Button variant="ghost" size="sm" className="h-5 px-1.5 text-[10px]" onClick={() => showHint(obj.id)}>
+                          <Button variant="ghost" size="sm" className="h-5 px-1.5 text-[10px] shrink-0" onClick={() => showHint(obj.id)}>
                             <Lightbulb className="h-2.5 w-2.5 mr-0.5" />Hint
                           </Button>
                         )}
                       </div>
-                      <p className="text-[11px] text-muted-foreground leading-tight">{obj.description}</p>
+
                       {!isDone && (
-                        <p className="text-[10px] text-blue-600 dark:text-blue-400 flex items-center gap-0.5 mt-0.5">
-                          <MapPin className="h-2.5 w-2.5 shrink-0" /> {obj.actionHint}
+                        <p className="text-[11px] text-muted-foreground leading-snug">{obj.description}</p>
+                      )}
+
+                      {/* Navigation button — show when current and not on correct page */}
+                      {isCurrent && !isDone && !isOnCorrectPage && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-6 text-[10px] gap-1 mt-0.5 border-primary/30 text-primary hover:bg-primary/10"
+                          onClick={() => navigateToObjective(obj.id)}
+                        >
+                          <Navigation className="h-2.5 w-2.5" />
+                          Go to {obj.actionHint.split("→")[0].replace("Go to ", "").trim()}
+                          <ArrowRight className="h-2.5 w-2.5" />
+                        </Button>
+                      )}
+
+                      {/* On correct page indicator */}
+                      {isCurrent && !isDone && isOnCorrectPage && (
+                        <p className="text-[10px] text-primary flex items-center gap-0.5 font-medium">
+                          <CheckCircle className="h-2.5 w-2.5" /> You're on the right page — {obj.actionHint}
                         </p>
                       )}
-                      {hints > 0 && (
-                        <div className="mt-1 space-y-0.5">
+
+                      {/* Hints */}
+                      {hints > 0 && !isDone && (
+                        <div className="mt-1 space-y-0.5 bg-accent/30 rounded p-1.5">
                           {obj.hints.slice(0, hints).map((hint, i) => (
-                            <p key={i} className="text-[10px] text-yellow-600 dark:text-yellow-400 flex items-start gap-0.5">
+                            <p key={i} className="text-[10px] text-yellow-600 dark:text-yellow-400 flex items-start gap-1">
                               <Lightbulb className="h-2.5 w-2.5 shrink-0 mt-0.5" /> {hint}
                             </p>
                           ))}
                           {hints < obj.hints.length && (
                             <button onClick={() => showHint(obj.id)} className="text-[9px] text-muted-foreground hover:text-foreground underline">
-                              Next hint ({hints}/{obj.hints.length})
+                              More hints ({hints}/{obj.hints.length})
                             </button>
                           )}
                         </div>
@@ -132,7 +187,7 @@ export function ActiveLabPanel() {
         {!isFinished && (
           <div className="p-3 border-t shrink-0">
             <Button onClick={finishLab} disabled={!allDone} size="sm" className="w-full text-xs">
-              {allDone ? "Complete Lab" : `${completed.size}/${activeLab.objectives.length} objectives done`}
+              {allDone ? "🏆 Complete Lab" : `${completed.size}/${activeLab.objectives.length} steps completed`}
             </Button>
           </div>
         )}

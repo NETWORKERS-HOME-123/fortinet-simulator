@@ -19,7 +19,8 @@ export interface LabObjective {
   title: string;
   description: string;
   hints: string[];
-  actionHint: string; // tells student where to go / what to do
+  actionHint: string;
+  navPath: string; // exact route where this task is performed
   validate: (state: ValidationState, cliHistory: string[], currentPath: string) => boolean;
 }
 
@@ -30,6 +31,7 @@ export interface LabScenario {
   difficulty: "beginner" | "intermediate" | "advanced";
   category: string;
   estimatedMinutes: number;
+  startPath: string; // route to navigate to when lab starts
   objectives: LabObjective[];
   tags: string[];
   nseAlignment: string;
@@ -53,45 +55,39 @@ export const scenarios: LabScenario[] = [
     difficulty: "beginner",
     category: "System Administration",
     estimatedMinutes: 10,
+    startPath: "/config/interfaces",
     tags: ["interfaces", "network", "NSE4.1"],
     nseAlignment: "NSE 4.1 — Module 1: System and Network Settings",
     objectives: [
       {
         id: "1-1",
-        title: "Navigate to Interfaces Page",
-        description: "Go to Configuration → Interfaces to view and manage network interfaces.",
-        hints: [
-          "Click 'Configuration' in the sidebar to expand it",
-          "Click 'Interfaces' under Configuration",
-        ],
-        actionHint: "Go to Configuration → Interfaces",
-        validate: (_state, _cli, path) => path === "/config/interfaces",
-      },
-      {
-        id: "1-2",
         title: "Set port6 IP Address",
-        description: "Configure port6 with the static IP address 192.168.100.1/24.",
+        description: "Find port6 in the interfaces list. Click Edit and set its IP address to 192.168.100.1/24.",
         hints: [
-          "Find port6 in the interfaces list and click Edit",
-          "Set IP Address to 192.168.100.1/24",
-          "Save the changes",
+          "Find port6 in the interfaces table — it currently shows 0.0.0.0/0",
+          "Click the Edit (pencil) icon on port6's row",
+          "In the IP Address field, enter: 192.168.100.1/24",
+          "Click Save to apply",
         ],
-        actionHint: "Edit port6 on the Interfaces page and set IP to 192.168.100.1/24",
+        actionHint: "Edit port6 → set IP to 192.168.100.1/24",
+        navPath: "/config/interfaces",
         validate: (state) => {
           const port6 = state.interfaces.find(i => i.name === "port6");
           return !!port6 && port6.ip === "192.168.100.1/24";
         },
       },
       {
-        id: "1-3",
+        id: "1-2",
         title: "Enable HTTPS and Ping Admin Access",
-        description: "Set port6 admin access to include both HTTPS and Ping protocols.",
+        description: "While editing port6, enable both HTTPS and Ping in the Admin Access settings.",
         hints: [
-          "Edit port6 and find the Admin Access section",
-          "Check both HTTPS and Ping checkboxes",
-          "This allows management access and connectivity testing on port6",
+          "Click Edit on port6 again (or stay in the edit dialog)",
+          "Find the Admin Access checkboxes",
+          "Check both HTTPS and Ping",
+          "This allows management via HTTPS and ICMP ping on port6",
         ],
-        actionHint: "Edit port6 admin access to include HTTPS and Ping",
+        actionHint: "Edit port6 → enable HTTPS + Ping admin access",
+        navPath: "/config/interfaces",
         validate: (state) => {
           const port6 = state.interfaces.find(i => i.name === "port6");
           if (!port6) return false;
@@ -100,15 +96,16 @@ export const scenarios: LabScenario[] = [
         },
       },
       {
-        id: "1-4",
+        id: "1-3",
         title: "Verify via CLI",
-        description: "Run 'get system interface' in the CLI terminal to verify your changes.",
+        description: "Open the CLI terminal ('>_' button in header) and run 'get system interface' to verify port6 now shows your new IP.",
         hints: [
-          "Click the '>_' CLI button in the header",
+          "Click the terminal icon ('>_') in the top header bar",
           "Type: get system interface",
-          "Confirm port6 shows your new IP and admin access settings",
+          "Press Enter — confirm port6 shows 192.168.100.1/24",
         ],
-        actionHint: "Open CLI and run: get system interface",
+        actionHint: "Open CLI → run: get system interface",
+        navPath: "/config/interfaces",
         validate: (_state, cli) => cli.some(c => c.toLowerCase().includes("get system interface")),
       },
     ],
@@ -122,24 +119,25 @@ export const scenarios: LabScenario[] = [
     difficulty: "beginner",
     category: "Firewall",
     estimatedMinutes: 15,
+    startPath: "/config/policies",
     tags: ["firewall", "policy", "utm", "NSE4.1"],
     nseAlignment: "NSE 4.1 — Module 2: Firewall Policies",
     onStart: (ctx) => {
-      // Remove the default LAN-to-Internet policy so student must create one
       ctx.deletePolicy(1);
     },
     objectives: [
       {
         id: "2-1",
         title: "Create LAN-to-WAN Policy",
-        description: "Create a new firewall policy with Source Interface=port3, Destination Interface=port1, Action=ACCEPT.",
+        description: "Click 'Create New' to add a policy. Set Source Interface = port3, Destination Interface = port1, Action = ACCEPT.",
         hints: [
-          "Go to Configuration → Firewall Policies",
-          "Click 'Create New'",
-          "Set Source Interface to port3, Destination Interface to port1",
-          "Set Action to ACCEPT and enable NAT",
+          "Click the 'Create New' button at the top of the policy table",
+          "Set Source Interface to 'port3' (LAN)",
+          "Set Destination Interface to 'port1' (WAN1)",
+          "Set Action to 'accept' and enable NAT",
         ],
-        actionHint: "Go to Firewall Policies and create a new policy: port3 → port1, ACCEPT",
+        actionHint: "Create New → port3 → port1, ACCEPT",
+        navPath: "/config/policies",
         validate: (state) => {
           return state.policies.some(p =>
             p.srcintf === "port3" && p.dstintf === "port1" && p.action === "accept"
@@ -149,13 +147,14 @@ export const scenarios: LabScenario[] = [
       {
         id: "2-2",
         title: "Restrict Service to HTTPS",
-        description: "Set the policy service to HTTPS only — not ALL. Principle of least privilege!",
+        description: "Edit your new policy and change Service from ALL to HTTPS. Principle of least privilege — don't allow everything!",
         hints: [
-          "Edit your new policy",
-          "Change Service from ALL to HTTPS",
+          "Click Edit on your newly created policy",
+          "Find the Service field and change it from ALL to HTTPS",
           "Using 'ALL' is overly permissive and a security risk",
         ],
-        actionHint: "Edit the policy and set Service to HTTPS",
+        actionHint: "Edit your policy → set Service to HTTPS",
+        navPath: "/config/policies",
         validate: (state) => {
           return state.policies.some(p =>
             p.srcintf === "port3" && p.dstintf === "port1" && p.action === "accept" &&
@@ -166,13 +165,14 @@ export const scenarios: LabScenario[] = [
       {
         id: "2-3",
         title: "Enable Antivirus Profile",
-        description: "Enable the 'default' antivirus profile on your policy to scan traffic for malware.",
+        description: "Edit the policy's Security Profiles section and set AntiVirus to 'default' to scan traffic for malware.",
         hints: [
-          "Edit your policy and find Security Profiles",
+          "Edit your policy and scroll to Security Profiles",
           "Set AntiVirus to 'default'",
           "This enables real-time malware scanning on allowed traffic",
         ],
-        actionHint: "Edit the policy and set AV profile to 'default'",
+        actionHint: "Edit policy → Security Profiles → AV = default",
+        navPath: "/config/policies",
         validate: (state) => {
           return state.policies.some(p =>
             p.srcintf === "port3" && p.dstintf === "port1" && p.action === "accept" &&
@@ -183,13 +183,14 @@ export const scenarios: LabScenario[] = [
       {
         id: "2-4",
         title: "Verify via CLI",
-        description: "Run 'show firewall policy' to verify your new policy appears in the running config.",
+        description: "Open CLI and run 'show firewall policy' to confirm your new policy appears.",
         hints: [
-          "Open CLI terminal",
+          "Click the terminal icon in the header",
           "Type: show firewall policy",
-          "Your policy should show srcintf=port3, dstintf=port1 with av-profile=default",
+          "Confirm srcintf=port3, dstintf=port1, av-profile=default",
         ],
-        actionHint: "Open CLI and run: show firewall policy",
+        actionHint: "Open CLI → run: show firewall policy",
+        navPath: "/config/policies",
         validate: (_state, cli) => cli.some(c => c.toLowerCase().includes("show firewall policy")),
       },
     ],
@@ -203,19 +204,22 @@ export const scenarios: LabScenario[] = [
     difficulty: "beginner",
     category: "Firewall",
     estimatedMinutes: 15,
+    startPath: "/config/addresses",
     tags: ["address-objects", "firewall", "NSE4.1"],
     nseAlignment: "NSE 4.1 — Module 2: Firewall Policies / Address Objects",
     objectives: [
       {
         id: "3-1",
         title: "Create WEB_SERVERS Address Object",
-        description: "Create a new address object named 'WEB_SERVERS' with type subnet and value 172.16.10.0/24.",
+        description: "Click 'Create New' and add an address object: Name = WEB_SERVERS, Type = subnet, Value = 172.16.10.0/24.",
         hints: [
-          "Go to Configuration → Addresses",
-          "Click 'Create New'",
-          "Name: WEB_SERVERS, Type: subnet, Value: 172.16.10.0/24",
+          "Click 'Create New' at the top of the Addresses page",
+          "Name: WEB_SERVERS",
+          "Type: subnet",
+          "Subnet/IP: 172.16.10.0/24",
         ],
-        actionHint: "Go to Configuration → Addresses and create WEB_SERVERS (172.16.10.0/24)",
+        actionHint: "Create New → WEB_SERVERS, subnet, 172.16.10.0/24",
+        navPath: "/config/addresses",
         validate: (state) => {
           return state.addressObjects.some(a =>
             a.name.toUpperCase() === "WEB_SERVERS" && a.value.includes("172.16.10.0")
@@ -225,13 +229,15 @@ export const scenarios: LabScenario[] = [
       {
         id: "3-2",
         title: "Create Policy Using WEB_SERVERS",
-        description: "Create a firewall policy that uses WEB_SERVERS as the destination address.",
+        description: "Navigate to Firewall Policies and create a new policy using WEB_SERVERS as the destination address.",
         hints: [
-          "Go to Firewall Policies → Create New",
+          "Go to Configuration → Firewall Policies",
+          "Click 'Create New'",
+          "Set Source: port1 (WAN), Destination: port3 (LAN)",
           "Set Destination Address to WEB_SERVERS",
-          "Source Interface: port1 (WAN), Dest Interface: port3 (LAN)",
         ],
-        actionHint: "Create a policy with dstaddr=WEB_SERVERS",
+        actionHint: "Go to Policies → Create New with dstaddr = WEB_SERVERS",
+        navPath: "/config/policies",
         validate: (state) => {
           return state.policies.some(p =>
             p.dstaddr.toUpperCase().includes("WEB_SERVERS")
@@ -241,13 +247,14 @@ export const scenarios: LabScenario[] = [
       {
         id: "3-3",
         title: "Verify Address Object via CLI",
-        description: "Run 'get firewall address' in the CLI to verify your new address object exists.",
+        description: "Run 'get firewall address' in the CLI to confirm WEB_SERVERS exists.",
         hints: [
-          "Open CLI terminal",
+          "Open CLI terminal ('>_' icon in header)",
           "Type: get firewall address",
           "WEB_SERVERS should appear with subnet 172.16.10.0/24",
         ],
-        actionHint: "Open CLI and run: get firewall address",
+        actionHint: "Open CLI → run: get firewall address",
+        navPath: "/config/addresses",
         validate: (_state, cli) => cli.some(c => c.toLowerCase().includes("get firewall address")),
       },
     ],
@@ -257,35 +264,38 @@ export const scenarios: LabScenario[] = [
   {
     id: "lab-4",
     title: "Web Filter Policy Enforcement",
-    description: "Create a policy to block social media sites using FQDN address objects and web filtering. Understand how FortiGuard categorization enforces web access controls.",
+    description: "Block social media by creating an FQDN address object and a DENY policy. Learn how FortiGuard categorization works with firewall rules.",
     difficulty: "intermediate",
     category: "UTM Security",
     estimatedMinutes: 15,
+    startPath: "/security",
     tags: ["web-filter", "fqdn", "policy", "NSE4.1"],
     nseAlignment: "NSE 4.1 — Module 7: Web Filtering",
     objectives: [
       {
         id: "4-1",
-        title: "Review Blocked Categories on Security Dashboard",
-        description: "Navigate to the Security Dashboard and identify which web categories are currently blocked.",
+        title: "Review Current Web Filter Stats",
+        description: "On the Security Dashboard, review the Web Filter widget to see which categories are already blocked (Gambling, Malicious, Adult, Phishing).",
         hints: [
-          "Click 'Security' in the sidebar",
-          "Look at the Web Filter widget for blocked categories",
-          "Gambling, Malicious, Adult Content, and Phishing are blocked",
+          "You're already on the Security Dashboard",
+          "Scroll down to find the Web Filter Categories card",
+          "Note: Gambling=blocked, Malicious=blocked, Adult Content=blocked",
         ],
-        actionHint: "Navigate to Security Dashboard",
+        actionHint: "Review Web Filter widget on this page",
+        navPath: "/security",
         validate: (_state, _cli, path) => path === "/security",
       },
       {
         id: "4-2",
         title: "Create Social Media FQDN Object",
-        description: "Create an FQDN address object named 'SOCIAL_MEDIA_BLOCK' with value '*.socialmedia.com'.",
+        description: "Go to Addresses and create an FQDN object: Name = SOCIAL_MEDIA_BLOCK, Type = fqdn, Value = *.socialmedia.com.",
         hints: [
-          "Go to Configuration → Addresses",
+          "Navigate to Configuration → Addresses",
           "Click 'Create New'",
           "Name: SOCIAL_MEDIA_BLOCK, Type: fqdn, Value: *.socialmedia.com",
         ],
-        actionHint: "Go to Addresses and create FQDN object: SOCIAL_MEDIA_BLOCK",
+        actionHint: "Go to Addresses → Create FQDN object",
+        navPath: "/config/addresses",
         validate: (state) => {
           return state.addressObjects.some(a =>
             a.name.toUpperCase().includes("SOCIAL") && a.type === "fqdn"
@@ -295,13 +305,15 @@ export const scenarios: LabScenario[] = [
       {
         id: "4-3",
         title: "Create DENY Policy for Social Media",
-        description: "Create a DENY policy using your new FQDN object to block social media access from the LAN.",
+        description: "Go to Firewall Policies and create a DENY policy: port3 → port1, Destination Address = SOCIAL_MEDIA_BLOCK, Action = DENY.",
         hints: [
-          "Go to Firewall Policies → Create New",
+          "Navigate to Configuration → Firewall Policies",
+          "Click 'Create New'",
           "Source: port3, Destination: port1, Dest Address: SOCIAL_MEDIA_BLOCK",
           "Action: DENY, Log Traffic: enabled",
         ],
-        actionHint: "Create a DENY policy using SOCIAL_MEDIA_BLOCK as destination",
+        actionHint: "Go to Policies → Create DENY with SOCIAL_MEDIA_BLOCK",
+        navPath: "/config/policies",
         validate: (state) => {
           return state.policies.some(p =>
             p.action === "deny" &&
@@ -316,34 +328,38 @@ export const scenarios: LabScenario[] = [
   {
     id: "lab-5",
     title: "SSL-VPN Access Control",
-    description: "Configure SSL-VPN access by creating address objects for restricted servers and building a policy to control VPN user access to internal resources.",
+    description: "Configure SSL-VPN access: review active sessions, create address objects for restricted servers, and build an access policy for VPN users.",
     difficulty: "intermediate",
     category: "VPN",
     estimatedMinutes: 20,
+    startPath: "/network/ssl-vpn",
     tags: ["ssl-vpn", "access-control", "policy", "NSE4.1"],
     nseAlignment: "NSE 4.1 — Module 11: SSL VPN",
     objectives: [
       {
         id: "5-1",
-        title: "Review SSL-VPN Sessions",
-        description: "Navigate to the SSL-VPN Monitor to see active remote user sessions.",
+        title: "Review Active SSL-VPN Sessions",
+        description: "You're on the SSL-VPN Monitor. Count the active sessions and note the tunnel types (Full Tunnel, Split Tunnel, Web Mode).",
         hints: [
-          "Go to Monitors → SSL VPN in the sidebar",
-          "Count the active sessions and note tunnel types",
-          "Look for Full Tunnel, Split Tunnel, and Web Mode sessions",
+          "Look at the session table on this page",
+          "Note: each row shows username, tunnel type, IP, and bandwidth",
+          "Full Tunnel = all traffic goes through VPN; Split = only internal traffic",
         ],
-        actionHint: "Navigate to Monitors → SSL VPN",
-        validate: (_state, _cli, path) => path === "/monitors/ssl-vpn",
+        actionHint: "Review the sessions table on this page",
+        navPath: "/network/ssl-vpn",
+        validate: (_state, _cli, path) => path === "/network/ssl-vpn",
       },
       {
         id: "5-2",
-        title: "Create RESTRICTED_SERVERS Address Object",
-        description: "Create an address object named 'RESTRICTED_SERVERS' with subnet 10.0.50.0/24.",
+        title: "Create RESTRICTED_SERVERS Address",
+        description: "Go to Addresses and create: Name = RESTRICTED_SERVERS, Type = subnet, Value = 10.0.50.0/24.",
         hints: [
-          "Go to Configuration → Addresses",
+          "Navigate to Configuration → Addresses",
+          "Click 'Create New'",
           "Name: RESTRICTED_SERVERS, Type: subnet, Value: 10.0.50.0/24",
         ],
-        actionHint: "Go to Addresses and create RESTRICTED_SERVERS (10.0.50.0/24)",
+        actionHint: "Go to Addresses → Create RESTRICTED_SERVERS",
+        navPath: "/config/addresses",
         validate: (state) => {
           return state.addressObjects.some(a =>
             a.name.toUpperCase().includes("RESTRICTED") && a.value.includes("10.0.50.0")
@@ -353,13 +369,15 @@ export const scenarios: LabScenario[] = [
       {
         id: "5-3",
         title: "Create VPN Access Policy",
-        description: "Create a policy: srcintf=ssl.root, dstintf=port3, dstaddr=RESTRICTED_SERVERS, action=ACCEPT.",
+        description: "Go to Firewall Policies and create: srcintf = ssl.root, dstintf = port3, dstaddr = RESTRICTED_SERVERS, action = ACCEPT.",
         hints: [
-          "Go to Firewall Policies → Create New",
+          "Navigate to Configuration → Firewall Policies",
+          "Click 'Create New'",
           "Source Interface: ssl.root, Destination Interface: port3",
           "Destination Address: RESTRICTED_SERVERS, Action: ACCEPT",
         ],
-        actionHint: "Create policy: ssl.root → port3, dstaddr=RESTRICTED_SERVERS, ACCEPT",
+        actionHint: "Go to Policies → Create ssl.root → port3 ACCEPT",
+        navPath: "/config/policies",
         validate: (state) => {
           return state.policies.some(p =>
             p.srcintf === "ssl.root" && p.dstintf === "port3" &&
@@ -370,13 +388,14 @@ export const scenarios: LabScenario[] = [
       {
         id: "5-4",
         title: "Verify via CLI",
-        description: "Run 'show firewall policy' to confirm your VPN access policy is configured.",
+        description: "Run 'show firewall policy' to confirm your VPN access policy exists with srcintf = ssl.root.",
         hints: [
           "Open CLI terminal",
           "Type: show firewall policy",
-          "Look for your policy with srcintf=ssl.root",
+          "Look for the policy with srcintf=ssl.root",
         ],
-        actionHint: "Open CLI and run: show firewall policy",
+        actionHint: "Open CLI → run: show firewall policy",
+        navPath: "/config/policies",
         validate: (_state, cli) => cli.some(c => c.toLowerCase().includes("show firewall policy")),
       },
     ],
@@ -386,10 +405,11 @@ export const scenarios: LabScenario[] = [
   {
     id: "lab-6",
     title: "IPsec Tunnel Diagnostics",
-    description: "Branch-CHI IPsec tunnel Phase 2 is down! Use dashboard monitors and CLI tools to diagnose and restore the tunnel.",
+    description: "Branch-CHI IPsec tunnel Phase 2 is down! Diagnose connectivity, run CLI diagnostics, and restore the tunnel.",
     difficulty: "intermediate",
     category: "VPN Troubleshooting",
     estimatedMinutes: 20,
+    startPath: "/network/ipsec",
     tags: ["ipsec", "troubleshooting", "diagnostics", "NSE4.2"],
     nseAlignment: "NSE 4.2 — Module 5: Diagnostics / IPsec VPN",
     onStart: (ctx) => {
@@ -399,48 +419,54 @@ export const scenarios: LabScenario[] = [
       {
         id: "6-1",
         title: "Identify the Down Tunnel",
-        description: "Navigate to Network → IPsec Monitor and find the tunnel with a Phase 2 failure.",
+        description: "On the IPsec Monitor, find which tunnel has Phase 2 = down. Note its name and remote gateway.",
         hints: [
-          "Go to Network → IPsec Monitor",
+          "You're on the IPsec Monitor page",
+          "Look for a tunnel with Phase 2 status = 'down' (red indicator)",
           "Branch-CHI shows Phase 1=up but Phase 2=down",
-          "Phase 2 down means IPsec SA negotiation failed",
         ],
-        actionHint: "Navigate to Network → IPsec Monitor",
+        actionHint: "Find the down tunnel in the table",
+        navPath: "/network/ipsec",
         validate: (_state, _cli, path) => path === "/network/ipsec",
       },
       {
         id: "6-2",
         title: "Ping Remote Gateway",
-        description: "Test basic connectivity to the remote gateway 192.0.2.100 using the CLI ping command.",
+        description: "Open CLI and test connectivity to the remote gateway: execute ping 192.0.2.100",
         hints: [
-          "Open CLI terminal",
+          "Open CLI terminal ('>_' icon)",
           "Type: execute ping 192.0.2.100",
-          "Successful ping confirms network-layer connectivity is fine",
+          "Successful ping confirms L3 connectivity is fine — Phase 2 SA negotiation is the issue",
         ],
-        actionHint: "Open CLI and run: execute ping 192.0.2.100",
+        actionHint: "Open CLI → run: execute ping 192.0.2.100",
+        navPath: "/network/ipsec",
         validate: (_state, cli) => cli.some(c => c.toLowerCase().includes("execute ping")),
       },
       {
         id: "6-3",
         title: "Get IPsec Tunnel Summary",
-        description: "Run the tunnel summary command to see detailed status of all VPN tunnels.",
+        description: "Run 'get vpn ipsec tunnel summary' to see detailed status of all tunnels.",
         hints: [
-          "Type: get vpn ipsec tunnel summary",
+          "In CLI, type: get vpn ipsec tunnel summary",
           "Branch-CHI should show 0 B traffic and uptime=0",
+          "Other tunnels should show normal traffic stats",
         ],
-        actionHint: "Open CLI and run: get vpn ipsec tunnel summary",
+        actionHint: "CLI → run: get vpn ipsec tunnel summary",
+        navPath: "/network/ipsec",
         validate: (_state, cli) => cli.some(c => c.toLowerCase().includes("get vpn ipsec tunnel summary")),
       },
       {
         id: "6-4",
         title: "Restore the Tunnel",
-        description: "Bring Branch-CHI Phase 2 back up using the Interfaces configuration or instructor toolbar.",
+        description: "Use the Instructor Toolbar (Ctrl+Shift+I) to bring Branch-CHI back up, then verify on the IPsec Monitor.",
         hints: [
-          "Use the Instructor Toolbar (wrench icon) to bring the tunnel up",
-          "Or navigate to the interface configuration to reset tunnel status",
-          "After restoration, verify on IPsec Monitor that Phase 2 shows 'up'",
+          "Press Ctrl+Shift+I to open the Instructor Toolbar",
+          "Select 'IPsec Tunnel Down' or use tunnel controls to set Branch-CHI to UP",
+          "Alternatively wait for instructor to restore it",
+          "After restoration, Phase 2 should show 'up' on this page",
         ],
-        actionHint: "Use Instructor Toolbar to set Branch-CHI tunnel to UP",
+        actionHint: "Instructor Toolbar → restore Branch-CHI tunnel",
+        navPath: "/network/ipsec",
         validate: (state) => {
           const tunnel = state.ipsecTunnels.find(t => t.name === "Branch-CHI");
           return !!tunnel && tunnel.phase2 === "up";
@@ -453,10 +479,11 @@ export const scenarios: LabScenario[] = [
   {
     id: "lab-7",
     title: "Respond to IPS Alert",
-    description: "A critical IPS alert has been triggered! Investigate the attack source, navigate to the Security Dashboard, and create a DENY policy to block the attacker.",
+    description: "A critical SQL injection attack has been detected! Investigate the alert, trace the attacker IP, and create a DENY policy to block them.",
     difficulty: "intermediate",
     category: "Threat Prevention",
     estimatedMinutes: 15,
+    startPath: "/",
     tags: ["ips", "incident-response", "firewall", "NSE4.1"],
     nseAlignment: "NSE 4.1 — Module 10: IPS / Incident Response",
     onStart: (ctx) => {
@@ -473,57 +500,78 @@ export const scenarios: LabScenario[] = [
       {
         id: "7-1",
         title: "Find the Critical Alert",
-        description: "Navigate to the Status Dashboard and locate the new critical IPS alert in the Alert Console.",
+        description: "On the Status Dashboard, locate the SQL Injection alert in the Alert Console. Note the attacker IP: 10.99.88.77.",
         hints: [
-          "Click 'Status' in the sidebar",
-          "Look for the SQL Injection alert from 10.99.88.77",
-          "Critical alerts are marked with red severity badges",
+          "You're on the Status Dashboard",
+          "Scroll to the Alert Console / Recent Alerts section",
+          "Look for the red 'critical' badge with SQL Injection message",
+          "The attacker IP is 10.99.88.77 targeting 172.16.0.10",
         ],
-        actionHint: "Navigate to Status Dashboard",
+        actionHint: "Find SQL Injection alert in the Alert Console",
+        navPath: "/",
         validate: (_state, _cli, path) => path === "/",
       },
       {
         id: "7-2",
         title: "Investigate on Security Dashboard",
-        description: "Navigate to Security Dashboard to review IPS signatures and threat details.",
+        description: "Navigate to the Security Dashboard to review IPS signatures and threat patterns.",
         hints: [
           "Click 'Security' in the sidebar",
-          "Review the IPS Signatures table for active detections",
-          "Note the attacker IP: 10.99.88.77",
+          "Review the IPS Signatures section for active detections",
+          "Correlate: same attacker IP 10.99.88.77 appears in threats",
         ],
-        actionHint: "Navigate to Security Dashboard",
+        actionHint: "Go to Security Dashboard → review IPS data",
+        navPath: "/security",
         validate: (_state, _cli, path) => path === "/security",
       },
       {
         id: "7-3",
-        title: "Create DENY Policy for Attacker",
-        description: "Block the attacker by creating a DENY policy with source address containing 10.99.88.77.",
+        title: "Create Address Object for Attacker",
+        description: "Go to Addresses and create an object: Name = ATTACKER_10_99_88_77, Type = subnet, Value = 10.99.88.77/32.",
         hints: [
-          "First create an address object for 10.99.88.77/32",
-          "Then create a DENY policy using that address as source",
-          "Place it high in the policy list for immediate effect",
+          "Navigate to Configuration → Addresses",
+          "Click 'Create New'",
+          "Name: ATTACKER_10_99_88_77 (or similar)",
+          "Type: subnet, Value: 10.99.88.77/32",
         ],
-        actionHint: "Create an address object for 10.99.88.77 and a DENY policy using it",
+        actionHint: "Go to Addresses → Create object for 10.99.88.77/32",
+        navPath: "/config/addresses",
         validate: (state) => {
-          // Check for a deny policy that references the attacker IP
+          return state.addressObjects.some(a => a.value.includes("10.99.88.77"));
+        },
+      },
+      {
+        id: "7-4",
+        title: "Create DENY Policy to Block Attacker",
+        description: "Go to Firewall Policies and create a DENY policy using your attacker address object as source.",
+        hints: [
+          "Navigate to Configuration → Firewall Policies",
+          "Click 'Create New'",
+          "Source Address: your attacker object, Action: DENY",
+          "Place it above ACCEPT policies for priority",
+        ],
+        actionHint: "Go to Policies → Create DENY for attacker IP",
+        navPath: "/config/policies",
+        validate: (state) => {
           const hasAddr = state.addressObjects.some(a => a.value.includes("10.99.88.77"));
           const hasDeny = state.policies.some(p => p.action === "deny" && (
-            p.srcaddr.includes("10.99.88") || 
+            p.srcaddr.includes("10.99.88") ||
             state.addressObjects.some(a => a.value.includes("10.99.88.77") && p.srcaddr.toUpperCase().includes(a.name.toUpperCase()))
           ));
           return hasAddr && hasDeny;
         },
       },
       {
-        id: "7-4",
+        id: "7-5",
         title: "Run Debug Flow Trace",
-        description: "Use CLI diagnostic command to trace packet flow from the attacker.",
+        description: "Open CLI and run 'diagnose debug flow' to trace how packets from the attacker are now handled.",
         hints: [
           "Open CLI terminal",
           "Type: diagnose debug flow",
-          "This shows how packets traverse the firewall pipeline",
+          "This shows packets hitting your new DENY policy",
         ],
-        actionHint: "Open CLI and run: diagnose debug flow",
+        actionHint: "Open CLI → run: diagnose debug flow",
+        navPath: "/config/policies",
         validate: (_state, cli) => cli.some(c => c.toLowerCase().includes("diagnose debug flow")),
       },
     ],
@@ -533,10 +581,11 @@ export const scenarios: LabScenario[] = [
   {
     id: "lab-8",
     title: "Interface Failure & Recovery",
-    description: "WAN2 (port2) has gone down! Diagnose the impact on routing, bring the interface back up, and verify recovery — all using real configuration pages and CLI.",
+    description: "WAN2 (port2) has gone down! Diagnose the impact, check routing, bring the interface back up, and verify recovery.",
     difficulty: "advanced",
     category: "Network Troubleshooting",
     estimatedMinutes: 20,
+    startPath: "/network",
     tags: ["interfaces", "routing", "troubleshooting", "NSE4.2"],
     nseAlignment: "NSE 4.2 — Module 1: Routing / Module 5: Diagnostics",
     onStart: (ctx) => {
@@ -546,37 +595,42 @@ export const scenarios: LabScenario[] = [
       {
         id: "8-1",
         title: "Identify the Down Interface",
-        description: "Navigate to the Network Dashboard and find which interface is down.",
+        description: "On the Network Dashboard, find which interface is down. Look for the red status indicator on port2 (WAN2).",
         hints: [
-          "Click 'Network' in the sidebar",
-          "port2 (WAN2) should show status 'down' with a red indicator",
-          "This is the backup WAN link",
+          "You're on the Network Dashboard",
+          "Look at the interface status indicators",
+          "port2 (WAN2) should show 'down' with a red badge",
+          "This is the backup WAN link for failover",
         ],
-        actionHint: "Navigate to Network Dashboard",
+        actionHint: "Find port2 (WAN2) status = down",
+        navPath: "/network",
         validate: (_state, _cli, path) => path === "/network",
       },
       {
         id: "8-2",
         title: "Check Routing Impact via CLI",
-        description: "Run 'get router info routing-table all' to see how the routing table was affected by the failure.",
+        description: "Open CLI and run 'get router info routing-table all' to see how routing is affected by the WAN2 failure.",
         hints: [
           "Open CLI terminal",
           "Type: get router info routing-table all",
-          "The backup default route via port2 should be inactive",
+          "The backup default route via port2 should be missing or inactive",
+          "Primary route via port1 (WAN1) should still be active",
         ],
-        actionHint: "Open CLI and run: get router info routing-table all",
+        actionHint: "Open CLI → run: get router info routing-table all",
+        navPath: "/network",
         validate: (_state, cli) => cli.some(c => c.toLowerCase().includes("get router info routing-table all")),
       },
       {
         id: "8-3",
         title: "Bring port2 Back Up",
-        description: "Go to Configuration → Interfaces, edit port2, and set its status back to 'up'.",
+        description: "Go to Interfaces config, find port2, click Edit, and set its status back to 'up'.",
         hints: [
-          "Go to Configuration → Interfaces",
-          "Find port2 (WAN2) and click Edit",
-          "Change Status to 'up' and save",
+          "Navigate to Configuration → Interfaces",
+          "Find port2 (WAN2) in the table",
+          "Click Edit, change Status to 'up', and Save",
         ],
-        actionHint: "Go to Interfaces config, edit port2, set status to UP",
+        actionHint: "Go to Interfaces → Edit port2 → set status to UP",
+        navPath: "/config/interfaces",
         validate: (state) => {
           const port2 = state.interfaces.find(i => i.name === "port2");
           return !!port2 && port2.status === "up";
@@ -585,13 +639,14 @@ export const scenarios: LabScenario[] = [
       {
         id: "8-4",
         title: "Verify Recovery via CLI",
-        description: "Run 'get system interface' to confirm port2 is back online.",
+        description: "Run 'get system interface' in CLI to confirm port2 is back online.",
         hints: [
           "Open CLI terminal",
           "Type: get system interface",
-          "port2 should now show status=up",
+          "port2 should now show status=up with traffic flowing",
         ],
-        actionHint: "Open CLI and run: get system interface",
+        actionHint: "Open CLI → run: get system interface",
+        navPath: "/config/interfaces",
         validate: (_state, cli) => cli.some(c => c.toLowerCase().includes("get system interface")),
       },
     ],
@@ -601,10 +656,11 @@ export const scenarios: LabScenario[] = [
   {
     id: "lab-9",
     title: "Quarantine a Compromised Host",
-    description: "A new compromised host has been detected! Find it on the Security Dashboard, create an address object for isolation, and build a top-priority DENY policy to quarantine it.",
+    description: "A compromised host (SRV-ACCT-03) is communicating with a C&C server! Find it, create an isolation address object, and build a DENY policy to quarantine it.",
     difficulty: "advanced",
     category: "Incident Response",
     estimatedMinutes: 20,
+    startPath: "/security",
     tags: ["incident-response", "quarantine", "security", "NSE4.1"],
     nseAlignment: "NSE 4.1 — Module 5: Logging / Module 9: Antivirus",
     onStart: (ctx) => {
@@ -635,24 +691,29 @@ export const scenarios: LabScenario[] = [
       {
         id: "9-1",
         title: "Find the Compromised Host",
-        description: "Navigate to the Security Dashboard and locate SRV-ACCT-03 in the Compromised Hosts section.",
+        description: "On the Security Dashboard, locate SRV-ACCT-03 in the Compromised Hosts section. Note its IP (10.0.5.55) and the C&C destination.",
         hints: [
-          "Click 'Security' in the sidebar",
-          "Look for SRV-ACCT-03 (10.0.5.55) in Compromised Hosts",
-          "Note the active C&C communication to 185.220.100.252",
+          "You're on the Security Dashboard",
+          "Scroll to the Compromised Hosts card/section",
+          "SRV-ACCT-03 at 10.0.5.55 is communicating with 185.220.100.252 (C&C)",
+          "It's also scanning internal SMB on 10.0.1.0/24:445 — lateral movement!",
         ],
-        actionHint: "Navigate to Security Dashboard",
+        actionHint: "Find SRV-ACCT-03 in Compromised Hosts",
+        navPath: "/security",
         validate: (_state, _cli, path) => path === "/security",
       },
       {
         id: "9-2",
-        title: "Create Address Object for Host",
-        description: "Create an address object for the compromised host IP 10.0.5.55/32 to use in a quarantine policy.",
+        title: "Create Quarantine Address Object",
+        description: "Go to Addresses and create: Name = QUARANTINE_SRV_ACCT_03, Type = subnet, Value = 10.0.5.55/32.",
         hints: [
-          "Go to Configuration → Addresses",
-          "Name: QUARANTINE_SRV_ACCT_03, Type: subnet, Value: 10.0.5.55/32",
+          "Navigate to Configuration → Addresses",
+          "Click 'Create New'",
+          "Name: QUARANTINE_SRV_ACCT_03",
+          "Type: subnet, Value: 10.0.5.55/32",
         ],
-        actionHint: "Go to Addresses and create object for 10.0.5.55/32",
+        actionHint: "Go to Addresses → Create object for 10.0.5.55/32",
+        navPath: "/config/addresses",
         validate: (state) => {
           return state.addressObjects.some(a => a.value.includes("10.0.5.55"));
         },
@@ -660,20 +721,22 @@ export const scenarios: LabScenario[] = [
       {
         id: "9-3",
         title: "Create Quarantine DENY Policy",
-        description: "Create a DENY policy using the quarantine address to block all traffic from the compromised host.",
+        description: "Go to Firewall Policies and create a DENY policy: Source Address = your quarantine object, Service = ALL, Action = DENY.",
         hints: [
-          "Go to Firewall Policies → Create New",
-          "Source Address: your quarantine object, Action: DENY",
+          "Navigate to Configuration → Firewall Policies",
+          "Click 'Create New'",
+          "Source Address: QUARANTINE_SRV_ACCT_03, Action: DENY",
           "Service: ALL, Log Traffic: enabled",
-          "Place it above other accept policies for priority",
+          "Drag it above ACCEPT policies so it takes priority",
         ],
-        actionHint: "Create a DENY policy blocking traffic from 10.0.5.55",
+        actionHint: "Go to Policies → Create DENY blocking 10.0.5.55",
+        navPath: "/config/policies",
         validate: (state) => {
           return state.policies.some(p =>
             p.action === "deny" && (
               p.srcaddr.includes("10.0.5.55") ||
-              state.addressObjects.some(a => 
-                a.value.includes("10.0.5.55") && 
+              state.addressObjects.some(a =>
+                a.value.includes("10.0.5.55") &&
                 p.srcaddr.toUpperCase().includes(a.name.toUpperCase())
               )
             )
@@ -683,13 +746,14 @@ export const scenarios: LabScenario[] = [
       {
         id: "9-4",
         title: "Verify Isolation via CLI",
-        description: "Run 'show firewall policy' to confirm the quarantine policy is in place.",
+        description: "Run 'show firewall policy' to confirm the quarantine DENY policy is in place.",
         hints: [
           "Open CLI terminal",
           "Type: show firewall policy",
-          "Your quarantine DENY policy should appear near the top",
+          "Your DENY policy for QUARANTINE_SRV_ACCT_03 should appear",
         ],
-        actionHint: "Open CLI and run: show firewall policy",
+        actionHint: "Open CLI → run: show firewall policy",
+        navPath: "/config/policies",
         validate: (_state, cli) => cli.some(c => c.toLowerCase().includes("show firewall policy")),
       },
     ],
@@ -699,35 +763,39 @@ export const scenarios: LabScenario[] = [
   {
     id: "lab-10",
     title: "Full Security Audit & Hardening",
-    description: "Conduct a comprehensive security audit: identify overly permissive policies (Service=ALL), tighten them to specific services, verify system health via CLI, and check license status.",
+    description: "Conduct a comprehensive audit: find overly permissive policies (Service=ALL), tighten them, verify system health, and check license status.",
     difficulty: "advanced",
     category: "Security Audit",
     estimatedMinutes: 30,
+    startPath: "/config/policies",
     tags: ["audit", "hardening", "compliance", "NSE4"],
     nseAlignment: "NSE 4.1/4.2 — Comprehensive Review",
     objectives: [
       {
         id: "10-1",
-        title: "Identify Permissive Policies",
-        description: "Navigate to the Policy Editor and find policies using Service=ALL with Action=ACCEPT.",
+        title: "Find Overly Permissive Policies",
+        description: "In the Policy Editor, identify policies using Service=ALL with Action=ACCEPT. These violate least-privilege and need hardening.",
         hints: [
-          "Go to Configuration → Firewall Policies",
-          "Policy 1 (LAN-to-Internet) uses Service=ALL — overly permissive",
+          "You're on the Firewall Policies page",
+          "Policy 1 (LAN-to-Internet) uses Service=ALL — overly permissive!",
           "Policy 5 (VPN-Users-Access) also uses Service=ALL",
+          "Both should be restricted to specific services",
         ],
-        actionHint: "Navigate to Firewall Policies",
+        actionHint: "Find policies with Service=ALL in the table",
+        navPath: "/config/policies",
         validate: (_state, _cli, path) => path === "/config/policies",
       },
       {
         id: "10-2",
         title: "Harden LAN-to-Internet Policy",
-        description: "Edit Policy ID 1 (LAN-to-Internet) and change Service from ALL to 'HTTPS DNS'.",
+        description: "Edit Policy ID 1 and change Service from ALL to 'HTTPS DNS'. LAN users only need web browsing and DNS.",
         hints: [
-          "Click Edit on Policy 1",
-          "Change Service from ALL to 'HTTPS DNS'",
-          "This restricts LAN to only web and DNS traffic",
+          "Click Edit on Policy 1 (LAN-to-Internet)",
+          "Change the Service field from ALL to 'HTTPS DNS'",
+          "Save — this restricts LAN to only web and DNS traffic",
         ],
-        actionHint: "Edit Policy 1 and set Service to 'HTTPS DNS'",
+        actionHint: "Edit Policy 1 → set Service = HTTPS DNS",
+        navPath: "/config/policies",
         validate: (state) => {
           const p1 = state.policies.find(p => p.id === 1);
           if (!p1) return false;
@@ -740,11 +808,12 @@ export const scenarios: LabScenario[] = [
         title: "Harden VPN Policy",
         description: "Edit Policy ID 5 (VPN-Users-Access) and restrict Service from ALL to 'HTTPS SSH RDP'.",
         hints: [
-          "Click Edit on Policy 5",
+          "Click Edit on Policy 5 (VPN-Users-Access)",
           "Change Service from ALL to 'HTTPS SSH RDP'",
-          "VPN users should only access specific services",
+          "VPN users should only access these specific services",
         ],
-        actionHint: "Edit Policy 5 and set Service to 'HTTPS SSH RDP'",
+        actionHint: "Edit Policy 5 → set Service = HTTPS SSH RDP",
+        navPath: "/config/policies",
         validate: (state) => {
           const p5 = state.policies.find(p => p.id === 5);
           if (!p5) return false;
@@ -755,25 +824,28 @@ export const scenarios: LabScenario[] = [
       {
         id: "10-4",
         title: "Verify System Health via CLI",
-        description: "Run 'get system performance status' to check CPU, memory, and session counts.",
+        description: "Run 'get system performance status' to check CPU, memory, and session counts are healthy.",
         hints: [
           "Open CLI terminal",
           "Type: get system performance status",
-          "CPU < 80% and Memory < 85% = healthy",
+          "Healthy: CPU < 80%, Memory < 85%, Sessions < 80% capacity",
         ],
-        actionHint: "Open CLI and run: get system performance status",
+        actionHint: "Open CLI → run: get system performance status",
+        navPath: "/config/policies",
         validate: (_state, cli) => cli.some(c => c.toLowerCase().includes("get system performance status")),
       },
       {
         id: "10-5",
         title: "Check License Status",
-        description: "Navigate to the Status Dashboard and review license expiry dates in the Licenses widget.",
+        description: "Go to the Status Dashboard and review license expiry dates. Identify which licenses are expired or expiring soon.",
         hints: [
-          "Go to Status Dashboard",
-          "Anti-Spam is EXPIRED — not providing protection",
-          "FortiClient EMS shows WARNING — expiring soon",
+          "Navigate to Status Dashboard (click 'Status' in sidebar)",
+          "Find the Licenses card",
+          "Anti-Spam = EXPIRED — no spam protection!",
+          "FortiClient EMS = WARNING — expiring soon",
         ],
-        actionHint: "Navigate to Status Dashboard",
+        actionHint: "Go to Status Dashboard → check Licenses card",
+        navPath: "/",
         validate: (_state, _cli, path) => path === "/",
       },
     ],
