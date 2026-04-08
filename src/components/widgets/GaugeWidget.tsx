@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect } from "react";
 
 interface GaugeWidgetProps {
   title: string;
@@ -8,9 +9,19 @@ interface GaugeWidgetProps {
 }
 
 export function GaugeWidget({ title, value, label = "%", color }: GaugeWidgetProps) {
+  const [liveValue, setLiveValue] = useState(value);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setLiveValue(prev => Math.max(0, Math.min(100, prev + (Math.random() - 0.5) * 6)));
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const displayValue = Math.round(liveValue);
   const circumference = 2 * Math.PI * 52;
-  const offset = circumference - (value / 100) * circumference;
-  const gaugeColor = color || (value > 80 ? "hsl(var(--destructive))" : value > 60 ? "hsl(var(--warning))" : "hsl(var(--success))");
+  const offset = circumference - (displayValue / 100) * circumference;
+  const gaugeColor = color || (displayValue > 80 ? "hsl(var(--destructive))" : displayValue > 60 ? "hsl(var(--warning))" : "hsl(var(--success))");
 
   return (
     <Card>
@@ -32,7 +43,7 @@ export function GaugeWidget({ title, value, label = "%", color }: GaugeWidgetPro
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-2xl font-bold">{value}</span>
+            <span className="text-2xl font-bold transition-all duration-500">{displayValue}</span>
             <span className="text-xs text-muted-foreground">{label}</span>
           </div>
         </div>

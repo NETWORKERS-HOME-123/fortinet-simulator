@@ -2,9 +2,41 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/widgets/StatusBadge";
 import { TimeRangeSelector } from "@/components/widgets/TimeRangeSelector";
-import { bandwidthData, sessionData, memoryData, interfaces, routes, dhcpLeases, ipsecTunnels, currentSessions, spuPercentage } from "@/data/mockData";
+import { bandwidthData as initBw, sessionData as initSess, memoryData as initMem, interfaces, routes, dhcpLeases, ipsecTunnels, currentSessions, spuPercentage } from "@/data/mockData";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis, Legend } from "recharts";
+import { useState, useEffect } from "react";
+
+function jitter(val: number, pct = 0.1) {
+  return Math.max(0, Math.round(val * (1 + (Math.random() - 0.5) * 2 * pct)));
+}
+
+let netTimeCounter = 0;
+
+export default function NetworkDashboard() {
+  const [bandwidthData, setBandwidthData] = useState(initBw);
+  const [sessionData, setSessionData] = useState(initSess);
+  const [memoryData, setMemoryData] = useState(initMem);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      netTimeCounter++;
+      const t = `${String(netTimeCounter).padStart(2, '0')}:00`;
+      setBandwidthData(prev => {
+        const last = prev[prev.length - 1];
+        return [...prev.slice(1), { time: t, inbound: jitter(last.inbound), outbound: jitter(last.outbound) }];
+      });
+      setSessionData(prev => {
+        const last = prev[prev.length - 1];
+        return [...prev.slice(1), { time: t, ipv4: jitter(last.ipv4), ipv6: jitter(last.ipv6) }];
+      });
+      setMemoryData(prev => {
+        const last = prev[prev.length - 1];
+        return [...prev.slice(1), { time: t, usage: Math.max(10, Math.min(95, jitter(last.usage, 0.05))) }];
+      });
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
 
 export default function NetworkDashboard() {
   return (
