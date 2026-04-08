@@ -1,12 +1,14 @@
+import { useState } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { Search, User } from "lucide-react";
+import { Search, User, Terminal } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { NotificationPopover } from "@/components/widgets/NotificationPopover";
 import { DarkModeToggle } from "@/components/widgets/DarkModeToggle";
-import { systemInfo } from "@/data/mockData";
+import { CLITerminal } from "@/components/CLITerminal";
+import { useSimulation } from "@/simulation/simulationContext";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -15,6 +17,9 @@ interface DashboardLayoutProps {
 }
 
 export function DashboardLayout({ children, title, subtitle }: DashboardLayoutProps) {
+  const [cliOpen, setCliOpen] = useState(false);
+  const { state } = useSimulation();
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
@@ -30,12 +35,15 @@ export function DashboardLayout({ children, title, subtitle }: DashboardLayoutPr
             </div>
             <div className="flex items-center gap-2">
               <Badge variant="outline" className="hidden lg:flex text-[10px] font-mono gap-1">
-                {systemInfo.hostname} <span className="text-muted-foreground">v7.6.0</span>
+                {state.systemInfo.hostname} <span className="text-muted-foreground">v7.6.0</span>
               </Badge>
               <div className="relative hidden md:block">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input placeholder="Search..." className="pl-8 w-56 h-9 text-sm" />
               </div>
+              <Button variant="ghost" size="icon" onClick={() => setCliOpen(!cliOpen)} title="CLI Console">
+                <Terminal className="h-4 w-4" />
+              </Button>
               <NotificationPopover />
               <DarkModeToggle />
               <Button variant="ghost" size="icon">
@@ -48,6 +56,7 @@ export function DashboardLayout({ children, title, subtitle }: DashboardLayoutPr
           </main>
         </div>
       </div>
+      <CLITerminal isOpen={cliOpen} onClose={() => setCliOpen(false)} />
     </SidebarProvider>
   );
 }
