@@ -64,7 +64,6 @@ const configItems = [
 ];
 
 const trainingItems = [
-  { title: "Lab Catalog", url: "/training", icon: GraduationCap },
   { title: "My Progress", url: "/training/progress", icon: BarChart3 },
 ];
 

@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { NotificationPopover } from "@/components/widgets/NotificationPopover";
 import { DarkModeToggle } from "@/components/widgets/DarkModeToggle";
 import { CLITerminal } from "@/components/CLITerminal";
+import { LabDropdown } from "@/components/labs/LabDropdown";
 import { useSimulation } from "@/simulation/simulationContext";
 
 interface DashboardLayoutProps {
@@ -44,6 +45,7 @@ export function DashboardLayout({ children, title, subtitle }: DashboardLayoutPr
               <Button variant="ghost" size="icon" onClick={() => setCliOpen(!cliOpen)} title="CLI Console">
                 <Terminal className="h-4 w-4" />
               </Button>
+              <LabDropdown />
               <NotificationPopover />
               <DarkModeToggle />
               <Button variant="ghost" size="icon">
