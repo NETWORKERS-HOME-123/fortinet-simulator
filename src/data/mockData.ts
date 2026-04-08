@@ -24,6 +24,32 @@ export const licenses = [
 export const cpuUsage = 34;
 export const memoryUsage = 62;
 
+// FortiGuard Info
+export const fortiGuardInfo = {
+  avVersion: "92.04521",
+  ipsVersion: "24.531",
+  appDbVersion: "24.531",
+  ipsDbVersion: "6.01087",
+  lastUpdate: "2026-04-08 14:19:33",
+  updateServer: "update.fortiguard.net",
+  webFilterDbVersion: "1.00312",
+  antiSpamDbVersion: "6.00280",
+};
+
+// Admin Users
+export const adminUsers = [
+  { username: "admin", ip: "10.0.1.100", profile: "super_admin", loginTime: "2026-04-08 06:15:22", method: "SSH" },
+  { username: "netops", ip: "10.0.1.105", profile: "prof_admin", loginTime: "2026-04-08 08:30:45", method: "HTTPS" },
+  { username: "readonly", ip: "10.0.1.110", profile: "read_only", loginTime: "2026-04-08 09:12:00", method: "HTTPS" },
+];
+
+// Virtual Domains
+export const virtualDomains = [
+  { name: "root", status: "active", interfaces: 6, sessions: 127453, bandwidth: "4.2 Gbps" },
+  { name: "guest-vdom", status: "active", interfaces: 2, sessions: 3420, bandwidth: "180 Mbps" },
+  { name: "dmz-vdom", status: "active", interfaces: 1, sessions: 890, bandwidth: "312 Mbps" },
+];
+
 export const fabricDevices = [
   { name: "FGT-DC-PRIMARY", type: "fortigate", status: "up", ip: "10.0.1.1" },
   { name: "FGT-DC-SECONDARY", type: "fortigate", status: "up", ip: "10.0.1.2" },
@@ -103,6 +129,15 @@ export const ipsecTunnels = [
   { name: "Azure-VNET", phase1: "up", phase2: "up", remote: "40.76.12.55", incoming: "3.1 GB", outgoing: "2.8 GB", uptime: "90 days" },
 ];
 
+// SSL-VPN Monitor
+export const sslVpnMonitorSessions = [
+  { user: "emma.taylor", sourceIp: "73.162.55.12", assignedIp: "10.212.134.5", duration: "7h 55m", bandwidth: "3.1 GB", tunnelType: "Full Tunnel", loginTime: "2026-04-08 06:05:00", os: "Windows 11" },
+  { user: "lisa.nguyen", sourceIp: "68.45.123.88", assignedIp: "10.212.134.8", duration: "6h 10m", bandwidth: "1.8 GB", tunnelType: "Full Tunnel", loginTime: "2026-04-08 07:50:00", os: "macOS 15" },
+  { user: "robert.kim", sourceIp: "24.56.78.90", assignedIp: "10.212.134.12", duration: "3h 22m", bandwidth: "920 MB", tunnelType: "Split Tunnel", loginTime: "2026-04-08 10:38:00", os: "Windows 10" },
+  { user: "alice.wang", sourceIp: "99.132.44.67", assignedIp: "10.212.134.15", duration: "1h 45m", bandwidth: "456 MB", tunnelType: "Web Mode", loginTime: "2026-04-08 12:15:00", os: "Chrome OS" },
+  { user: "james.brown", sourceIp: "45.22.88.134", assignedIp: "10.212.134.18", duration: "0h 32m", bandwidth: "89 MB", tunnelType: "Full Tunnel", loginTime: "2026-04-08 13:28:00", os: "Ubuntu 22.04" },
+];
+
 // Security Dashboard
 export const topThreats = [
   { name: "SQL Injection", count: 14523, severity: "critical" },
@@ -116,10 +151,29 @@ export const topThreats = [
 ];
 
 export const compromisedHosts = [
-  { ip: "10.0.5.102", hostname: "WS-ACCT-04", severity: "critical", threat: "Botnet C&C Communication", detectedAt: "2026-04-08 14:21:12", status: "quarantined" },
-  { ip: "10.0.8.201", hostname: "WS-DEV-12", severity: "critical", threat: "Ransomware (Win32/Lockbit)", detectedAt: "2026-04-08 14:18:56", status: "isolated" },
-  { ip: "10.0.10.55", hostname: "LAPTOP-JSMITH", severity: "high", threat: "Trojan Downloader", detectedAt: "2026-04-08 12:05:33", status: "monitoring" },
-  { ip: "10.0.6.78", hostname: "SRV-DB-02", severity: "medium", threat: "Suspicious DNS queries", detectedAt: "2026-04-08 10:44:21", status: "monitoring" },
+  { ip: "10.0.5.102", hostname: "WS-ACCT-04", severity: "critical", threat: "Botnet C&C Communication", detectedAt: "2026-04-08 14:21:12", status: "quarantined",
+    sessions: [
+      { destIp: "185.220.101.6", destPort: 443, protocol: "TCP", policy: "Policy-12", bytes: 24500, application: "HTTPS" },
+      { destIp: "185.220.101.8", destPort: 8443, protocol: "TCP", policy: "Policy-12", bytes: 12300, application: "Unknown" },
+    ]
+  },
+  { ip: "10.0.8.201", hostname: "WS-DEV-12", severity: "critical", threat: "Ransomware (Win32/Lockbit)", detectedAt: "2026-04-08 14:18:56", status: "isolated",
+    sessions: [
+      { destIp: "192.168.1.0/24", destPort: 445, protocol: "SMB", policy: "Policy-8", bytes: 890000, application: "SMB" },
+      { destIp: "10.0.8.0/24", destPort: 139, protocol: "NetBIOS", policy: "Policy-8", bytes: 45000, application: "NetBIOS" },
+    ]
+  },
+  { ip: "10.0.10.55", hostname: "LAPTOP-JSMITH", severity: "high", threat: "Trojan Downloader", detectedAt: "2026-04-08 12:05:33", status: "monitoring",
+    sessions: [
+      { destIp: "198.51.100.44", destPort: 443, protocol: "TCP", policy: "Policy-15", bytes: 56000, application: "HTTPS" },
+    ]
+  },
+  { ip: "10.0.6.78", hostname: "SRV-DB-02", severity: "medium", threat: "Suspicious DNS queries", detectedAt: "2026-04-08 10:44:21", status: "monitoring",
+    sessions: [
+      { destIp: "8.8.8.8", destPort: 53, protocol: "UDP", policy: "Policy-3", bytes: 12000, application: "DNS" },
+      { destIp: "1.1.1.1", destPort: 53, protocol: "UDP", policy: "Policy-3", bytes: 8900, application: "DNS" },
+    ]
+  },
 ];
 
 export const sandboxStats = {
@@ -156,7 +210,7 @@ export const avThreats = Array.from({ length: 24 }, (_, i) => ({
   blocked: Math.floor(Math.random() * 45 + 8),
 }));
 
-// Users & Devices
+// Users & Devices / Assets & Identities
 export const activeUsers = [
   { username: "john.doe", ip: "10.0.10.55", group: "Engineering", traffic: "2.4 GB", duration: "8h 23m", authMethod: "LDAP" },
   { username: "sarah.chen", ip: "10.0.10.102", group: "Finance", traffic: "890 MB", duration: "6h 45m", authMethod: "LDAP" },
@@ -175,6 +229,62 @@ export const deviceInventory = [
   { type: "Android", count: 34, os: "Android 14/15", compliant: 30, nonCompliant: 4 },
   { type: "Printer", count: 12, os: "Embedded", compliant: 12, nonCompliant: 0 },
   { type: "IoT Device", count: 8, os: "Various", compliant: 5, nonCompliant: 3 },
+];
+
+// Firewall Users
+export const firewallUsers = [
+  { username: "john.doe", authMethod: "LDAP", group: "Engineering", trafficUsed: "2.4 GB", timeoutRemaining: "4h 37m", ip: "10.0.10.55", authServer: "DC-LDAP-01" },
+  { username: "sarah.chen", authMethod: "LDAP", group: "Finance", trafficUsed: "890 MB", timeoutRemaining: "1h 15m", ip: "10.0.10.102", authServer: "DC-LDAP-01" },
+  { username: "mike.wilson", authMethod: "SAML", group: "Sales", trafficUsed: "1.2 GB", timeoutRemaining: "3h 48m", ip: "10.0.10.103", authServer: "Azure-AD" },
+  { username: "emma.taylor", authMethod: "SSL-VPN", group: "Remote", trafficUsed: "3.1 GB", timeoutRemaining: "8h 00m", ip: "10.212.134.5", authServer: "Local" },
+  { username: "david.park", authMethod: "LDAP", group: "Marketing", trafficUsed: "678 MB", timeoutRemaining: "2h 30m", ip: "10.0.10.110", authServer: "DC-LDAP-01" },
+  { username: "lisa.nguyen", authMethod: "SSL-VPN", group: "Remote", trafficUsed: "1.8 GB", timeoutRemaining: "5h 50m", ip: "10.212.134.8", authServer: "Local" },
+  { username: "carlos.garcia", authMethod: "RADIUS", group: "Contractors", trafficUsed: "340 MB", timeoutRemaining: "0h 45m", ip: "10.0.10.120", authServer: "NPS-01" },
+];
+
+// WiFi Dashboard
+export const fortiApDevices = [
+  { name: "FAP-FLOOR1-01", serial: "FP221E3920000101", status: "up", clients: 24, channel: "36/149", firmware: "7.4.3-b0083", model: "FAP-231F", txPower: "Auto", uptime: "42d 6h" },
+  { name: "FAP-FLOOR2-01", serial: "FP221E3920000102", status: "up", clients: 31, channel: "44/157", firmware: "7.4.3-b0083", model: "FAP-231F", txPower: "Auto", uptime: "42d 6h" },
+  { name: "FAP-FLOOR3-01", serial: "FP221E3920000103", status: "up", clients: 18, channel: "52/161", firmware: "7.4.3-b0083", model: "FAP-431F", txPower: "Auto", uptime: "42d 6h" },
+  { name: "FAP-FLOOR3-02", serial: "FP221E3920000104", status: "down", clients: 0, channel: "N/A", firmware: "7.4.3-b0083", model: "FAP-231F", txPower: "N/A", uptime: "0" },
+  { name: "FAP-CONF-01", serial: "FP221E3920000105", status: "up", clients: 8, channel: "40/153", firmware: "7.4.3-b0083", model: "FAP-231F", txPower: "Auto", uptime: "38d 12h" },
+  { name: "FAP-LOBBY-01", serial: "FP221E3920000106", status: "up", clients: 12, channel: "48/165", firmware: "7.4.3-b0083", model: "FAP-221E", txPower: "Auto", uptime: "42d 6h" },
+];
+
+export const wifiClients = [
+  { mac: "AA:BB:CC:11:22:33", hostname: "MacBook-Sarah", ap: "FAP-FLOOR2-01", ssid: "Corp-WiFi", band: "5GHz", signal: -42, rxRate: "867 Mbps", txRate: "780 Mbps", ip: "10.0.10.102" },
+  { mac: "AA:BB:CC:11:22:34", hostname: "iPhone-Mike", ap: "FAP-FLOOR1-01", ssid: "Corp-WiFi", band: "5GHz", signal: -55, rxRate: "573 Mbps", txRate: "520 Mbps", ip: "10.0.10.103" },
+  { mac: "AA:BB:CC:11:22:35", hostname: "DESKTOP-ACCT1", ap: "FAP-FLOOR2-01", ssid: "Corp-WiFi", band: "2.4GHz", signal: -62, rxRate: "144 Mbps", txRate: "130 Mbps", ip: "10.0.10.115" },
+  { mac: "AA:BB:CC:11:22:36", hostname: "Galaxy-Tab-A", ap: "FAP-CONF-01", ssid: "Guest-WiFi", band: "5GHz", signal: -48, rxRate: "433 Mbps", txRate: "390 Mbps", ip: "10.0.20.15" },
+  { mac: "AA:BB:CC:11:22:37", hostname: "Pixel-7", ap: "FAP-LOBBY-01", ssid: "Guest-WiFi", band: "5GHz", signal: -68, rxRate: "286 Mbps", txRate: "260 Mbps", ip: "10.0.20.22" },
+];
+
+// Top Websites by Category
+export const topWebsites = [
+  { domain: "microsoft.com", category: "Business", visits: 45200, bandwidth: "4.5 GB", action: "allow" },
+  { domain: "google.com", category: "Search Engine", visits: 38100, bandwidth: "3.2 GB", action: "allow" },
+  { domain: "youtube.com", category: "Streaming Media", visits: 12400, bandwidth: "8.9 GB", action: "monitor" },
+  { domain: "facebook.com", category: "Social Media", visits: 8900, bandwidth: "1.8 GB", action: "monitor" },
+  { domain: "github.com", category: "Information Technology", visits: 7600, bandwidth: "2.1 GB", action: "allow" },
+  { domain: "reddit.com", category: "Social Media", visits: 5400, bandwidth: "980 MB", action: "monitor" },
+  { domain: "tiktok.com", category: "Social Media", visits: 3200, bandwidth: "2.4 GB", action: "monitor" },
+  { domain: "dropbox.com", category: "Cloud Storage", visits: 2100, bandwidth: "5.6 GB", action: "allow" },
+  { domain: "bet365.com", category: "Gambling", visits: 890, bandwidth: "120 MB", action: "block" },
+  { domain: "torproject.org", category: "Proxy Avoidance", visits: 45, bandwidth: "12 MB", action: "block" },
+];
+
+// Cloud Applications
+export const cloudApplications = [
+  { name: "Microsoft 365", category: "Business", bandwidth: "4.5 GB", sessions: 12400, risk: 1, users: 142, saasType: "Sanctioned" },
+  { name: "Google Workspace", category: "Business", bandwidth: "3.2 GB", sessions: 9800, risk: 1, users: 98, saasType: "Sanctioned" },
+  { name: "Salesforce", category: "CRM", bandwidth: "1.8 GB", sessions: 5600, risk: 1, users: 45, saasType: "Sanctioned" },
+  { name: "Slack", category: "Collaboration", bandwidth: "1.2 GB", sessions: 8900, risk: 1, users: 120, saasType: "Sanctioned" },
+  { name: "Zoom", category: "Video Conferencing", bandwidth: "6.7 GB", sessions: 3200, risk: 1, users: 85, saasType: "Sanctioned" },
+  { name: "Dropbox", category: "Cloud Storage", bandwidth: "5.6 GB", sessions: 2100, risk: 2, users: 34, saasType: "Tolerated" },
+  { name: "WeTransfer", category: "File Sharing", bandwidth: "890 MB", sessions: 450, risk: 3, users: 12, saasType: "Tolerated" },
+  { name: "Mega.nz", category: "Cloud Storage", bandwidth: "234 MB", sessions: 89, risk: 4, users: 3, saasType: "Unsanctioned" },
+  { name: "AnonFiles", category: "File Sharing", bandwidth: "45 MB", sessions: 12, risk: 5, users: 1, saasType: "Unsanctioned" },
 ];
 
 // VPN Dashboard
