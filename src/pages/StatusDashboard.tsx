@@ -3,11 +3,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GaugeWidget } from "@/components/widgets/GaugeWidget";
 import { StatusBadge } from "@/components/widgets/StatusBadge";
 import { TimeRangeSelector } from "@/components/widgets/TimeRangeSelector";
+import { AddWidgetDialog } from "@/components/widgets/AddWidgetDialog";
 import { systemInfo, licenses, cpuUsage, memoryUsage, fabricDevices, sessionData as initialSessionData, alertLogs, fortiGuardInfo, adminUsers, virtualDomains } from "@/data/mockData";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { Server, Shield, CheckCircle, AlertTriangle, Wifi, ShieldCheck, UserCog, Layers } from "lucide-react";
+import { Server, Shield, CheckCircle, AlertTriangle, Wifi, ShieldCheck, UserCog, Layers, Clock, Settings, X } from "lucide-react";
 import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 
 function jitter(val: number, pct = 0.1) {
   return Math.max(0, Math.round(val * (1 + (Math.random() - 0.5) * 2 * pct)));
@@ -15,35 +17,69 @@ function jitter(val: number, pct = 0.1) {
 
 let timeCounter = 0;
 
+const statusWidgets = [
+  { id: "sysinfo", name: "System Information", description: "Hostname, serial, firmware, uptime" },
+  { id: "cpu", name: "CPU Usage", description: "Real-time CPU utilization gauge" },
+  { id: "memory", name: "Memory Usage", description: "Real-time memory utilization gauge" },
+  { id: "licenses", name: "Licenses", description: "FortiCare and UTM bundle status" },
+  { id: "fortiguard", name: "FortiGuard", description: "AV/IPS database versions" },
+  { id: "sessions", name: "Session Rate", description: "IPv4/IPv6 session chart" },
+  { id: "admins", name: "Administrators", description: "Logged-in admin users" },
+  { id: "vdoms", name: "Virtual Domains", description: "VDOM status overview" },
+  { id: "fabric", name: "Security Fabric", description: "Connected Fortinet devices" },
+  { id: "ha", name: "HA Status", description: "High availability cluster" },
+  { id: "alerts", name: "Alert Console", description: "Recent alerts and logs" },
+];
+
+function WidgetHeader({ title, icon, children }: { title: string; icon?: React.ReactNode; children?: React.ReactNode }) {
+  return (
+    <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
+      <CardTitle className="text-sm font-medium flex items-center gap-2">
+        {icon} {title}
+      </CardTitle>
+      <div className="flex items-center gap-1">
+        {children}
+        <Button variant="ghost" size="icon" className="h-5 w-5 text-muted-foreground hover:text-foreground">
+          <Settings className="h-3 w-3" />
+        </Button>
+        <Button variant="ghost" size="icon" className="h-5 w-5 text-muted-foreground hover:text-destructive">
+          <X className="h-3 w-3" />
+        </Button>
+      </div>
+    </CardHeader>
+  );
+}
+
 export default function StatusDashboard() {
   const [sessionData, setSessionData] = useState(initialSessionData);
+  const [systemTime, setSystemTime] = useState(new Date());
 
   useEffect(() => {
-    const interval = setInterval(() => {
+    const clockInterval = setInterval(() => setSystemTime(new Date()), 1000);
+    const sessionInterval = setInterval(() => {
       setSessionData(prev => {
         const last = prev[prev.length - 1];
         timeCounter++;
-        const next = [...prev.slice(1), {
+        return [...prev.slice(1), {
           time: `${String(timeCounter).padStart(2, '0')}:00`,
           ipv4: jitter(last.ipv4),
           ipv6: jitter(last.ipv6),
         }];
-        return next;
       });
     }, 5000);
-    return () => clearInterval(interval);
+    return () => { clearInterval(clockInterval); clearInterval(sessionInterval); };
   }, []);
 
   return (
     <DashboardLayout title="Status Dashboard" subtitle={systemInfo.hostname}>
+      <div className="flex justify-end mb-4">
+        <AddWidgetDialog widgets={statusWidgets} />
+      </div>
+
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {/* System Info */}
         <Card className="md:col-span-2">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Server className="h-4 w-4 text-primary" /> System Information
-            </CardTitle>
-          </CardHeader>
+          <WidgetHeader title="System Information" icon={<Server className="h-4 w-4 text-primary" />} />
           <CardContent>
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div><span className="text-muted-foreground">Hostname:</span> <span className="font-medium">{systemInfo.hostname}</span></div>
@@ -52,6 +88,12 @@ export default function StatusDashboard() {
               <div><span className="text-muted-foreground">Firmware:</span> <span className="font-medium">{systemInfo.firmware}</span></div>
               <div><span className="text-muted-foreground">Uptime:</span> <span className="font-medium">{systemInfo.uptime}</span></div>
               <div><span className="text-muted-foreground">HA Status:</span> <StatusBadge status="active" /> <span className="text-xs ml-1">{systemInfo.haRole}</span></div>
+              <div className="flex items-center gap-1">
+                <span className="text-muted-foreground">System Time:</span>
+                <Clock className="h-3 w-3 text-muted-foreground" />
+                <span className="font-mono text-xs">{systemTime.toLocaleString()}</span>
+              </div>
+              <div><span className="text-muted-foreground">Operation Mode:</span> <span className="font-medium">NAT</span></div>
             </div>
           </CardContent>
         </Card>
@@ -62,11 +104,7 @@ export default function StatusDashboard() {
 
         {/* Licenses */}
         <Card className="md:col-span-2">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-primary" /> Licenses
-            </CardTitle>
-          </CardHeader>
+          <WidgetHeader title="Licenses" icon={<CheckCircle className="h-4 w-4 text-primary" />} />
           <CardContent>
             <Table>
               <TableHeader>
@@ -93,11 +131,7 @@ export default function StatusDashboard() {
 
         {/* FortiGuard Info */}
         <Card className="md:col-span-2">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4 text-primary" /> FortiGuard Information
-            </CardTitle>
-          </CardHeader>
+          <WidgetHeader title="FortiGuard Information" icon={<ShieldCheck className="h-4 w-4 text-primary" />} />
           <CardContent>
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div><span className="text-muted-foreground">AV Engine:</span> <span className="font-medium">{fortiGuardInfo.avVersion}</span></div>
@@ -114,7 +148,11 @@ export default function StatusDashboard() {
         <Card className="md:col-span-2">
           <CardHeader className="pb-2 flex flex-row items-center justify-between">
             <CardTitle className="text-sm font-medium">Session Rate</CardTitle>
-            <TimeRangeSelector />
+            <div className="flex items-center gap-1">
+              <TimeRangeSelector />
+              <Button variant="ghost" size="icon" className="h-5 w-5 text-muted-foreground"><Settings className="h-3 w-3" /></Button>
+              <Button variant="ghost" size="icon" className="h-5 w-5 text-muted-foreground"><X className="h-3 w-3" /></Button>
+            </div>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={200}>
@@ -132,11 +170,7 @@ export default function StatusDashboard() {
 
         {/* Administrators */}
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <UserCog className="h-4 w-4 text-primary" /> Administrators
-            </CardTitle>
-          </CardHeader>
+          <WidgetHeader title="Administrators" icon={<UserCog className="h-4 w-4 text-primary" />} />
           <CardContent>
             <div className="space-y-2">
               {adminUsers.map((a) => (
@@ -157,11 +191,7 @@ export default function StatusDashboard() {
 
         {/* Virtual Domains */}
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Layers className="h-4 w-4 text-primary" /> Virtual Domains
-            </CardTitle>
-          </CardHeader>
+          <WidgetHeader title="Virtual Domains" icon={<Layers className="h-4 w-4 text-primary" />} />
           <CardContent>
             <div className="space-y-2">
               {virtualDomains.map((v) => (
@@ -182,11 +212,7 @@ export default function StatusDashboard() {
 
         {/* Security Fabric */}
         <Card className="xl:col-span-2">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Shield className="h-4 w-4 text-primary" /> Security Fabric
-            </CardTitle>
-          </CardHeader>
+          <WidgetHeader title="Security Fabric" icon={<Shield className="h-4 w-4 text-primary" />} />
           <CardContent>
             <div className="grid grid-cols-2 gap-2">
               {fabricDevices.map((d) => (
@@ -204,9 +230,7 @@ export default function StatusDashboard() {
 
         {/* HA Status */}
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">HA Status</CardTitle>
-          </CardHeader>
+          <WidgetHeader title="HA Status" />
           <CardContent className="space-y-3">
             <div className="flex items-center justify-between p-3 rounded-md bg-muted/50">
               <div className="text-sm font-medium">FGT-DC-PRIMARY</div>
@@ -222,11 +246,7 @@ export default function StatusDashboard() {
 
         {/* Alert Console */}
         <Card className="md:col-span-2 xl:col-span-4">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-primary" /> Alert & Log Console
-            </CardTitle>
-          </CardHeader>
+          <WidgetHeader title="Alert & Log Console" icon={<AlertTriangle className="h-4 w-4 text-primary" />} />
           <CardContent>
             <div className="max-h-64 overflow-auto space-y-1">
               {alertLogs.map((log) => (
