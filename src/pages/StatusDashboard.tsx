@@ -187,9 +187,23 @@ export default function StatusDashboard() {
           </Card>
         );
       case "cpu":
-        return <div className="h-full [&>div]:h-full [&>div>div]:h-full"><GaugeWidget title="CPU Usage" value={cpuUsage} /></div>;
+        return (
+          <Card className="h-full">
+            <WidgetHeader title="CPU Usage" onRemove={remove} />
+            <CardContent className="flex items-center justify-center">
+              <GaugeWidget title="" value={cpuUsage} />
+            </CardContent>
+          </Card>
+        );
       case "memory":
-        return <div className="h-full [&>div]:h-full [&>div>div]:h-full"><GaugeWidget title="Memory Usage" value={memoryUsage} /></div>;
+        return (
+          <Card className="h-full">
+            <WidgetHeader title="Memory Usage" onRemove={remove} />
+            <CardContent className="flex items-center justify-center">
+              <GaugeWidget title="" value={memoryUsage} />
+            </CardContent>
+          </Card>
+        );
       case "licenses":
         return (
           <Card className="h-full overflow-auto">
