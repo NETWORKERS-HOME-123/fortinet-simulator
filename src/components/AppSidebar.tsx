@@ -14,6 +14,11 @@ import {
   ChevronDown,
   Cloud,
   Target,
+  Terminal,
+  GraduationCap,
+  Settings,
+  MapPin,
+  BarChart3,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -52,6 +57,17 @@ const dashboardItems = [
   { title: "VPN", url: "/vpn", icon: Lock },
 ];
 
+const configItems = [
+  { title: "Firewall Policies", url: "/config/policies", icon: Shield },
+  { title: "Interfaces", url: "/config/interfaces", icon: Network },
+  { title: "Address Objects", url: "/config/addresses", icon: MapPin },
+];
+
+const trainingItems = [
+  { title: "Lab Catalog", url: "/training", icon: GraduationCap },
+  { title: "My Progress", url: "/training/progress", icon: BarChart3 },
+];
+
 const monitorItems = [
   { title: "Sessions", url: "/monitors/sessions", icon: MonitorDot },
   { title: "Sources", url: "/monitors/sources", icon: Network },
@@ -71,6 +87,26 @@ export function AppSidebar() {
 
   const isActive = (path: string) =>
     path === "/" ? location.pathname === "/" : location.pathname === path;
+
+  const renderSimpleGroup = (label: string, items: typeof configItems) => (
+    <SidebarGroup>
+      <SidebarGroupLabel>{label}</SidebarGroupLabel>
+      <SidebarGroupContent>
+        <SidebarMenu>
+          {items.map((item) => (
+            <SidebarMenuItem key={item.title}>
+              <SidebarMenuButton asChild isActive={isActive(item.url)}>
+                <NavLink to={item.url}>
+                  <item.icon className="h-4 w-4" />
+                  {!collapsed && <span>{item.title}</span>}
+                </NavLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
+        </SidebarMenu>
+      </SidebarGroupContent>
+    </SidebarGroup>
+  );
 
   return (
     <Sidebar collapsible="icon">
@@ -126,6 +162,9 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {renderSimpleGroup("Configuration", configItems)}
+        {renderSimpleGroup("Training Labs", trainingItems)}
 
         <SidebarGroup>
           <SidebarGroupLabel>FortiView Monitors</SidebarGroupLabel>

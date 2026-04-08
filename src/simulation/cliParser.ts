@@ -8,7 +8,7 @@ interface CliContext {
   cpuUsage: number;
   memoryUsage: number;
   interfaces: NetworkInterface[];
-  routes: Array<{ destination: string; gateway: string; interface: string; type: string; distance: number }>;
+  routes: Array<{ destination: string; gateway: string; interface: string; type: string; distance: number; priority: number }>;
   policies: FirewallPolicy[];
   ipsecTunnels: Array<{ name: string; phase1: string; phase2: string; remote: string; incoming: string; outgoing: string; uptime: string }>;
   dhcpLeases: Array<{ ip: string; mac: string; hostname: string; interface: string; expiry: string; status: string }>;
