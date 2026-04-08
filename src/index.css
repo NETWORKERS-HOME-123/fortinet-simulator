@@ -90,3 +90,16 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* react-grid-layout overrides */
+.react-grid-item {
+  overflow: hidden;
+}
+.react-grid-item > .react-resizable-handle {
+  z-index: 10;
+}
+.react-grid-placeholder {
+  background: hsl(var(--primary) / 0.15) !important;
+  border-radius: 0.5rem;
+  border: 2px dashed hsl(var(--primary) / 0.4) !important;
+}
