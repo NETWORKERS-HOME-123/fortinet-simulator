@@ -10,7 +10,8 @@ import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YA
 import { Server, Shield, CheckCircle, AlertTriangle, Wifi, ShieldCheck, UserCog, Layers, Clock, Settings, X, GripVertical } from "lucide-react";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { ResponsiveGridLayout, type LayoutItem } from "react-grid-layout";
+import { ResponsiveGridLayout, verticalCompactor, type LayoutItem } from "react-grid-layout";
+import type { Layout } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 
